@@ -43,27 +43,13 @@ const SiteContentList: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto pb-32 animate-fadeIn">
       
-      {/* Header Section */}
-      <div className="bg-white p-6 border-b border-slate-100 sticky top-0 z-10">
-          <div className="flex items-center gap-4 mb-2">
-            <img 
-                src="https://seujoelho.com/wp-content/uploads/2021/03/02_seu_joelho_logotipo-1-2048x534.png" 
-                alt="Seu Joelho" 
-                className="h-10 w-auto object-contain"
-            />
-            <div className="h-8 w-px bg-slate-200"></div>
-            <div>
-                <h1 className="text-lg font-bold text-slate-900 leading-none">Integração Web</h1>
-                <p className="text-xs text-slate-500 font-medium">Sincronizado com seujoelho.com</p>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="relative mt-4">
+      {/* Search Bar - Inline */}
+      <div className="p-6 pb-2">
+          <div className="relative">
             <input 
               type="text" 
               placeholder="Pesquisar artigo no site..." 
-              className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium shadow-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchPosts(searchTerm)}
@@ -74,7 +60,7 @@ const SiteContentList: React.FC = () => {
       </div>
 
       {/* Content List */}
-      <div className="p-6 space-y-4">
+      <div className="p-6 space-y-4 pt-2">
         {loading ? (
              <>
                 <PostSkeleton />

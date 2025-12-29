@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ArticleLength, ArticleState, TargetAudience, Tone } from '../types';
-import { FileText, Key, Sparkles, Users, ArrowRight, ArrowLeft, Check, PenTool, BookOpen, FlaskConical } from 'lucide-react';
+import { FileText, Key, Sparkles, Users, ArrowRight, ArrowLeft, Check, PenTool, BookOpen, FlaskConical, AlertCircle } from 'lucide-react';
 
 interface ArticleWizardProps {
   onGenerate: (state: ArticleState) => void;
@@ -16,6 +16,7 @@ const ArticleWizard: React.FC<ArticleWizardProps> = ({ onGenerate, isGenerating,
   const [length, setLength] = useState<ArticleLength>(ArticleLength.MEDIUM);
   const [audience, setAudience] = useState<TargetAudience>(TargetAudience.PATIENT);
   const [tone, setTone] = useState<Tone>(Tone.EMPATHETIC);
+  const [errors, setErrors] = useState<{topic?: string, keywords?: string}>({});
 
   const isEvidenceMode = !!initialState?.evidence;
 
@@ -31,7 +32,31 @@ const ArticleWizard: React.FC<ArticleWizardProps> = ({ onGenerate, isGenerating,
     }
   }, [initialState]);
 
-  const handleNext = () => setStep(prev => prev + 1);
+  const validateStep1 = () => {
+      let isValid = true;
+      const newErrors: any = {};
+
+      if (!topic.trim()) {
+          newErrors.topic = "O tema do artigo é obrigatório.";
+          isValid = false;
+      }
+      
+      if (!keywords.trim()) {
+          newErrors.keywords = "Adicione pelo menos uma palavra-chave para SEO.";
+          isValid = false;
+      }
+
+      setErrors(newErrors);
+      return isValid;
+  };
+
+  const handleNext = () => {
+      if (step === 1) {
+          if (!validateStep1()) return;
+      }
+      setStep(prev => prev + 1);
+  };
+  
   const handleBack = () => setStep(prev => prev - 1);
 
   const handleSubmit = () => {
@@ -80,10 +105,11 @@ const ArticleWizard: React.FC<ArticleWizardProps> = ({ onGenerate, isGenerating,
                         <input 
                             type="text" 
                             value={topic}
-                            onChange={(e) => setTopic(e.target.value)}
-                            className="w-full px-4 py-4 bg-white border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-lg font-medium"
+                            onChange={(e) => { setTopic(e.target.value); if(errors.topic) setErrors({...errors, topic: undefined}); }}
+                            className={`w-full px-4 py-4 bg-white border rounded-xl outline-none transition-all text-lg font-medium ${errors.topic ? 'border-red-300 focus:border-red-500 focus:ring-red-100' : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'}`}
                             placeholder="Ex: Tudo sobre Prótese de Joelho"
                         />
+                        {errors.topic && <p className="text-red-500 text-xs font-bold mt-1.5 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.topic}</p>}
                     </div>
 
                     <div>
@@ -93,11 +119,12 @@ const ArticleWizard: React.FC<ArticleWizardProps> = ({ onGenerate, isGenerating,
                             <input 
                                 type="text" 
                                 value={keywords}
-                                onChange={(e) => setKeywords(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-blue-500 outline-none transition-all text-slate-600"
+                                onChange={(e) => { setKeywords(e.target.value); if(errors.keywords) setErrors({...errors, keywords: undefined}); }}
+                                className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl outline-none transition-all text-slate-600 ${errors.keywords ? 'border-red-300 focus:border-red-500' : 'border-slate-200 focus:border-blue-500'}`}
                                 placeholder="Separe por vírgulas"
                             />
                         </div>
+                        {errors.keywords && <p className="text-red-500 text-xs font-bold mt-1.5 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.keywords}</p>}
                     </div>
                 </div>
             )}
@@ -115,7 +142,7 @@ const ArticleWizard: React.FC<ArticleWizardProps> = ({ onGenerate, isGenerating,
                             <button
                                 key={a}
                                 onClick={() => setAudience(a)}
-                                className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between
+                                className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between active:scale-[0.98]
                                 ${audience === a ? 'border-purple-500 bg-purple-50 text-purple-900' : 'border-slate-100 bg-white hover:bg-slate-50'}`}
                             >
                                 <span className="font-bold">{a}</span>
@@ -131,7 +158,7 @@ const ArticleWizard: React.FC<ArticleWizardProps> = ({ onGenerate, isGenerating,
                                 <button
                                     key={t}
                                     onClick={() => setTone(t)}
-                                    className={`px-4 py-2 text-sm border rounded-full transition-all
+                                    className={`px-4 py-2 text-sm border rounded-full transition-all active:scale-95
                                     ${tone === t ? 'border-purple-500 bg-purple-600 text-white shadow-md' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}
                                 >
                                     {t.split('/')[0]}
@@ -152,7 +179,7 @@ const ArticleWizard: React.FC<ArticleWizardProps> = ({ onGenerate, isGenerating,
                             <button
                                 key={l}
                                 onClick={() => setLength(l)}
-                                className={`p-6 rounded-2xl border-2 text-left transition-all
+                                className={`p-6 rounded-2xl border-2 text-left transition-all active:scale-[0.98]
                                 ${length === l ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-100 bg-white hover:border-slate-200'}`}
                             >
                                 <div className="font-bold text-slate-900 mb-1">{l.split('(')[0]}</div>
@@ -180,13 +207,13 @@ const ArticleWizard: React.FC<ArticleWizardProps> = ({ onGenerate, isGenerating,
              ) : (
                  <>
                     {step > 1 && (
-                        <button onClick={handleBack} className="p-4 rounded-xl text-slate-400 hover:bg-slate-50 transition-colors">
+                        <button onClick={handleBack} className="p-4 rounded-xl text-slate-400 hover:bg-slate-50 transition-colors active:scale-95">
                             <ArrowLeft className="w-6 h-6" />
                         </button>
                     )}
                     
                     {step < 3 ? (
-                        <button onClick={handleNext} className="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                        <button onClick={handleNext} className="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 active:scale-[0.98]">
                             Continuar <ArrowRight className="w-5 h-5" />
                         </button>
                     ) : (

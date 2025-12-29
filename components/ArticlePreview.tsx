@@ -30,6 +30,24 @@ const ArticlePreview: React.FC<ArticlePreviewProps> = ({ article, onConvertToPos
       return tempDiv.textContent || tempDiv.innerText || "";
   };
 
+  // Basic Skeleton if article title is missing (acts as loading state indicator)
+  if (!article.title) {
+      return (
+        <div className="flex flex-col lg:flex-row gap-6 h-full animate-pulse">
+            <div className="flex-1 bg-white shadow-lg rounded-xl border border-slate-200 overflow-hidden flex flex-col h-full p-8 space-y-6">
+                <div className="h-8 bg-slate-200 rounded w-1/4"></div>
+                <div className="h-12 bg-slate-200 rounded w-3/4"></div>
+                <div className="space-y-3">
+                    <div className="h-4 bg-slate-200 rounded w-full"></div>
+                    <div className="h-4 bg-slate-200 rounded w-full"></div>
+                    <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                </div>
+            </div>
+            <div className="w-full lg:w-80 flex-shrink-0 bg-white rounded-xl h-96 border border-slate-200"></div>
+        </div>
+      );
+  }
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 h-full">
         {/* Main Article Content */}
@@ -38,16 +56,16 @@ const ArticlePreview: React.FC<ArticlePreviewProps> = ({ article, onConvertToPos
             {/* Actions Header */}
             <div className="h-16 bg-slate-50 border-b border-slate-200 flex items-center justify-between px-4 flex-shrink-0">
                 <div className="flex gap-2 items-center">
-                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                    <div className="w-3 h-3 rounded-full bg-amber-400"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-red-400 shadow-sm"></div>
+                    <div className="w-3 h-3 rounded-full bg-amber-400 shadow-sm"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-400 shadow-sm"></div>
                     <span className="ml-2 text-xs font-bold text-slate-400 uppercase tracking-wide hidden sm:inline">Preview Artigo</span>
                 </div>
 
                 <div className="flex gap-2">
                     <button 
                         onClick={handleCopy}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all active:scale-95"
                     >
                         {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                         {copied ? 'Copiado' : 'Copiar Texto'}
@@ -56,7 +74,7 @@ const ArticlePreview: React.FC<ArticlePreviewProps> = ({ article, onConvertToPos
                     {onConvertToPost && (
                         <button 
                             onClick={() => onConvertToPost(article)}
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition-opacity shadow-md"
+                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg hover:opacity-90 transition-all shadow-md active:scale-95"
                         >
                             <Instagram className="w-3.5 h-3.5" />
                             Criar Post
@@ -87,7 +105,7 @@ const ArticlePreview: React.FC<ArticlePreviewProps> = ({ article, onConvertToPos
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {article.seoSuggestions?.map((suggestion, idx) => (
-                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-600 bg-white p-2 rounded border border-slate-100">
+                            <div key={idx} className="flex items-start gap-2 text-xs text-slate-600 bg-white p-2 rounded border border-slate-100 hover:border-blue-200 transition-colors">
                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 shrink-0"></div>
                                 {suggestion}
                             </div>

@@ -59,28 +59,13 @@ const AnatomyLibrary: React.FC = () => {
   return (
     <div className={`h-full flex flex-col bg-slate-50 animate-fadeIn ${isFullscreen ? 'fixed inset-0 z-[60] bg-black' : ''}`}>
       
-      {/* Header (Hidden in Fullscreen) */}
-      {!isFullscreen && (
-        <div className="bg-white px-6 py-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-              <Cube className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">Anatomia 3D Interativa</h1>
-              <p className="text-xs text-slate-500 font-medium">Modelos para explicação clínica e criação de conteúdo</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className={`flex flex-1 overflow-hidden ${isFullscreen ? 'flex-col' : 'flex-col lg:flex-row'}`}>
         
         {/* Sidebar List (Hidden in Fullscreen) */}
         {!isFullscreen && (
-          <div className="w-full lg:w-80 bg-white border-r border-slate-200 overflow-y-auto z-10">
+          <div className="w-full lg:w-80 bg-white border-b lg:border-r lg:border-b-0 border-slate-200 overflow-y-auto z-10 flex-shrink-0 max-h-[40vh] lg:max-h-full">
             <div className="p-4 space-y-2">
-              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">Modelos Disponíveis</h3>
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 px-2">Selecione o Modelo</h3>
               {models.map((model) => (
                 <button
                   key={model.id}
@@ -99,11 +84,11 @@ const AnatomyLibrary: React.FC = () => {
               ))}
             </div>
             
-            <div className="p-4 mt-4 bg-slate-50 border-t border-slate-100">
+            <div className="p-4 mt-4 bg-slate-50 border-t border-slate-100 hidden lg:block">
                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex gap-3">
                     <Info className="w-5 h-5 text-blue-600 shrink-0" />
                     <p className="text-xs text-blue-800 leading-relaxed">
-                        Use o mouse ou toque para rotacionar, ampliar e mover o modelo. Ideal para mostrar ao paciente no consultório.
+                        Use o mouse ou toque para rotacionar, ampliar e mover o modelo.
                     </p>
                 </div>
             </div>
@@ -111,7 +96,7 @@ const AnatomyLibrary: React.FC = () => {
         )}
 
         {/* Main Viewer Area */}
-        <div className="flex-1 relative bg-slate-900 flex flex-col">
+        <div className="flex-1 relative bg-slate-900 flex flex-col h-full">
            
            {/* Viewer Controls Overlay */}
            <div className="absolute top-4 right-4 z-20 flex gap-2">
@@ -126,12 +111,12 @@ const AnatomyLibrary: React.FC = () => {
 
            {/* Content Creation Controls (Mockup) */}
            {!isFullscreen && (
-               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-4">
-                  <button className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 transition-transform active:scale-95">
-                      <Video className="w-4 h-4" /> Gravar Explicação
+               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-4 w-full justify-center px-4">
+                  <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-full shadow-lg font-bold text-xs flex items-center gap-2 transition-transform active:scale-95 whitespace-nowrap">
+                      <Video className="w-4 h-4" /> Gravar
                   </button>
-                  <button className="bg-white hover:bg-slate-100 text-slate-900 px-5 py-2.5 rounded-full shadow-lg font-bold text-sm flex items-center gap-2 transition-transform active:scale-95">
-                      <Camera className="w-4 h-4" /> Capturar Foto
+                  <button className="bg-white hover:bg-slate-100 text-slate-900 px-4 py-2.5 rounded-full shadow-lg font-bold text-xs flex items-center gap-2 transition-transform active:scale-95 whitespace-nowrap">
+                      <Camera className="w-4 h-4" /> Foto
                   </button>
                </div>
            )}
@@ -153,8 +138,8 @@ const AnatomyLibrary: React.FC = () => {
            {/* Description Footer (Visible in normal mode) */}
            {!isFullscreen && (
              <div className="bg-white p-4 border-t border-slate-200">
-                <h2 className="font-bold text-slate-900">{activeModel.title}</h2>
-                <p className="text-sm text-slate-500">{activeModel.description}</p>
+                <h2 className="font-bold text-slate-900 text-sm">{activeModel.title}</h2>
+                <p className="text-xs text-slate-500 mt-1">{activeModel.description}</p>
              </div>
            )}
         </div>

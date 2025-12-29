@@ -1,11 +1,9 @@
-
 import React, { useState, useMemo } from 'react';
-import { Appointment, AppointmentStatus, AppointmentType, Tone, FinancialStatus } from '../types';
+import { Appointment, AppointmentStatus, AppointmentType, Tone } from '../types';
 import { 
-    Calendar, Clock, MessageCircle, CheckCircle2, X, Sparkles, User, Columns, List,
-    Syringe, Bone, Stethoscope, Activity, Star, Send, DollarSign, FileText, Mic, 
-    MoreVertical, ChevronLeft, ChevronRight, Search, Filter, AlertOctagon, ClipboardList,
-    Printer, Phone, Mail, PauseCircle, PlayCircle
+    Calendar, User, Bone, Syringe, Activity, Star, Send, DollarSign, FileText, Mic, 
+    ChevronLeft, ChevronRight, Search, Filter, AlertOctagon, ClipboardList,
+    Printer, Phone, Mail, PauseCircle, X, Sparkles, MessageCircle, CheckCircle2
 } from 'lucide-react';
 import { generateAppointmentMessage } from '../services/geminiService';
 
@@ -39,20 +37,16 @@ const waitlistData: Appointment[] = [
 ];
 
 const AppointmentScheduler = () => {
-  // 1. STATE MANAGEMENT
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
   const [currentDate, setCurrentDate] = useState(new Date('2024-10-25'));
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'agenda' | 'waitlist'>('agenda');
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [recordingId, setRecordingId] = useState<string | null>(null); // For Voice Notes simulation
+  const [recordingId, setRecordingId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<string>('all');
-  
-  // Gemini Message Gen
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedMessage, setGeneratedMessage] = useState('');
   
-  // 2. HELPER FUNCTIONS
   const formatDate = (date: Date) => date.toISOString().split('T')[0];
   const displayDate = (date: Date) => date.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   
@@ -81,7 +75,6 @@ const AppointmentScheduler = () => {
       }
   };
 
-  // 3. COMPUTED DATA (Stats & Filtering)
   const filteredAppointments = useMemo(() => {
       let filtered = appointments.filter(a => {
           if (activeTab === 'agenda') return a.date === formatDate(currentDate);
@@ -106,7 +99,6 @@ const AppointmentScheduler = () => {
       return { total, revenue, surgeries };
   }, [filteredAppointments]);
 
-  // 4. ACTIONS
   const toggleFinancial = (id: string) => {
       setAppointments(prev => prev.map(a => {
           if (a.id !== id) return a;
@@ -134,201 +126,157 @@ const AppointmentScheduler = () => {
       } catch (e) { console.error(e); } finally { setIsGenerating(false); }
   };
 
-  // 5. COMPONENTS
-  
   const StatCard = ({ icon: Icon, label, value, color }: any) => (
-      <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${color} bg-opacity-10 text-current`}>
+      <div className="bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 min-w-[140px]">
+          <div className={`p-2 rounded-xl ${color} bg-opacity-10 text-current`}>
               <Icon className={`w-5 h-5 ${color.replace('bg-', 'text-')}`} />
           </div>
           <div>
-              <p className="text-[10px] uppercase font-bold text-slate-400">{label}</p>
-              <p className="text-lg font-bold text-slate-900 leading-none">{value}</p>
+              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{label}</p>
+              <p className="text-base font-black text-slate-900 leading-none mt-0.5">{value}</p>
           </div>
       </div>
   );
 
   return (
-    <div className="h-full flex flex-col bg-slate-50 animate-fadeIn">
+    <div className="h-full flex flex-col bg-slate-50 animate-fadeIn pb-24 lg:pb-0">
         
-        {/* TOP HEADER: NAVIGATION & STATS */}
-        <div className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-            {/* Row 1: Date Nav & Search */}
-            <div className="flex flex-col md:flex-row justify-between items-center p-4 gap-4">
-                <div className="flex items-center gap-4 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
-                    <button onClick={() => handleDateChange(-1)} className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500"><ChevronLeft className="w-5 h-5" /></button>
-                    <div className="text-center min-w-[140px]">
-                        <span className="block text-xs font-bold text-slate-400 uppercase">Agenda de</span>
-                        <span className="block text-sm font-bold text-slate-900 capitalize">{displayDate(currentDate)}</span>
-                    </div>
-                    <button onClick={() => handleDateChange(1)} className="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500"><ChevronRight className="w-5 h-5" /></button>
+        {/* Inline Controls (Replacing Sticky Header) */}
+        <div className="p-4 space-y-4">
+            
+            {/* Date Navigator */}
+            <div className="flex items-center justify-between bg-white p-2 rounded-2xl border border-slate-100 shadow-sm">
+                <button onClick={() => handleDateChange(-1)} className="p-3 hover:bg-slate-50 rounded-xl transition-all text-slate-500 active:scale-95"><ChevronLeft className="w-5 h-5" /></button>
+                <div className="text-center">
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Agenda</span>
+                    <span className="block text-sm font-black text-slate-900 capitalize">{displayDate(currentDate)}</span>
                 </div>
+                <button onClick={() => handleDateChange(1)} className="p-3 hover:bg-slate-50 rounded-xl transition-all text-slate-500 active:scale-95"><ChevronRight className="w-5 h-5" /></button>
+            </div>
 
-                <div className="flex gap-2 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-64">
-                        <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            {/* Stats Scroller */}
+            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                <StatCard icon={User} label="Pacientes" value={stats.total} color="text-blue-600 bg-blue-600" />
+                <StatCard icon={Bone} label="Cirurgias" value={stats.surgeries} color="text-red-500 bg-red-500" />
+                <StatCard icon={DollarSign} label="Previsão" value={`R$ ${stats.revenue.toLocaleString()}`} color="text-green-600 bg-green-600" />
+            </div>
+
+            {/* Search & Tabs */}
+            <div className="flex flex-col gap-3">
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
                         <input 
                             type="text" 
                             placeholder="Buscar paciente..." 
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
                         />
                     </div>
-                    <button className="p-2 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800"><Filter className="w-4 h-4" /></button>
+                    <button className="p-3 bg-slate-900 text-white rounded-xl shadow-md hover:bg-slate-800 active:scale-95 transition-transform"><Filter className="w-5 h-5" /></button>
                 </div>
-            </div>
 
-            {/* Row 2: KPIs */}
-            <div className="grid grid-cols-3 gap-3 px-4 pb-4">
-                <StatCard icon={User} label="Pacientes" value={stats.total} color="text-blue-600 bg-blue-600" />
-                <StatCard icon={Bone} label="Cirurgias" value={stats.surgeries} color="text-red-500 bg-red-500" />
-                <StatCard icon={DollarSign} label="Faturamento" value={`R$ ${stats.revenue.toLocaleString()}`} color="text-green-600 bg-green-600" />
-            </div>
-
-            {/* Row 3: Tabs */}
-            <div className="flex px-4 gap-6 border-t border-slate-100 pt-1">
-                <button 
-                    onClick={() => setActiveTab('agenda')}
-                    className={`py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === 'agenda' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}
-                >
-                    Agenda Diária
-                </button>
-                <button 
-                    onClick={() => setActiveTab('waitlist')}
-                    className={`py-3 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${activeTab === 'waitlist' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400'}`}
-                >
-                    Lista de Espera 
-                    <span className="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px]">{waitlistData.length}</span>
-                </button>
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                    <button 
+                        onClick={() => setActiveTab('agenda')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'agenda' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                    >
+                        Agenda do Dia
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('waitlist')}
+                        className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'waitlist' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+                    >
+                        Espera <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded text-[9px]">{waitlistData.length}</span>
+                    </button>
+                </div>
             </div>
         </div>
 
-        {/* MAIN LIST AREA */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-28">
-            
+        {/* Appointment List */}
+        <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
             {(activeTab === 'agenda' ? filteredAppointments : waitlistData).map((apt, idx, arr) => {
-                // Conflict Detection
                 const hasConflict = idx > 0 && arr[idx-1].time === apt.time && apt.time !== '';
 
                 return (
-                <div key={apt.id} className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden relative">
-                    
-                    {/* Status Strip */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
-                        apt.status === 'confirmed' ? 'bg-green-500' : 
-                        apt.type === 'surgery' ? 'bg-red-500' : 'bg-slate-300'
-                    }`}></div>
+                <div key={apt.id} className="group bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${apt.status === 'confirmed' ? 'bg-green-500' : apt.type === 'surgery' ? 'bg-red-500' : 'bg-slate-300'}`}></div>
 
-                    <div className="p-4 pl-6">
-                        {/* Header: Time & Badges */}
+                    <div className="p-4 pl-5">
                         <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-2">
-                                <span className="font-mono text-lg font-bold text-slate-700 bg-slate-50 px-2 rounded-md border border-slate-100">{apt.time || '--:--'}</span>
+                                <span className="font-mono text-lg font-black text-slate-700">{apt.time || '--:--'}</span>
                                 {hasConflict && (
-                                    <span className="flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full animate-pulse border border-red-100">
+                                    <span className="flex items-center gap-1 text-[9px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
                                         <AlertOctagon className="w-3 h-3" /> Conflito
                                     </span>
                                 )}
-                                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${getStatusColor(apt.status)}`}>
+                                <div className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${getStatusColor(apt.status)}`}>
                                     {apt.status}
                                 </div>
                             </div>
                             
-                            {/* Action Menu */}
-                            <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => window.open(`tel:${apt.phone}`)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Phone className="w-4 h-4" /></button>
-                                <button onClick={() => window.open(`mailto:patient@email.com`)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><Mail className="w-4 h-4" /></button>
-                                <button onClick={() => handleGenerateMessage(apt)} className="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg"><MessageCircle className="w-4 h-4" /></button>
+                            <div className="flex gap-2">
+                                <button onClick={() => window.open(`https://wa.me/${apt.phone}`)} className="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors"><MessageCircle className="w-4 h-4" /></button>
+                                <button onClick={() => handleGenerateMessage(apt)} className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"><Sparkles className="w-4 h-4" /></button>
                             </div>
                         </div>
 
-                        {/* Patient Info */}
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 className="font-bold text-slate-900 text-lg flex items-center gap-2">
-                                    {apt.patientName}
-                                    {apt.tags?.includes('VIP') && <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />}
-                                </h3>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <div className="flex items-center gap-1 text-xs font-bold text-slate-500 uppercase">
-                                        {getTypeIcon(apt.type)}
-                                        {apt.type.replace('_', ' ')}
-                                    </div>
-                                    {apt.tags?.map(tag => (
-                                        <span key={tag} className="text-[10px] bg-slate-100 text-slate-600 px-1.5 rounded border border-slate-200">{tag}</span>
+                        <div className="mb-4">
+                            <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                                {apt.patientName}
+                                {apt.tags?.includes('VIP') && <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase bg-slate-50 px-1.5 py-0.5 rounded">
+                                    {getTypeIcon(apt.type)} {apt.type.replace('_', ' ')}
+                                </div>
+                                {apt.tags?.map(tag => (
+                                    <span key={tag} className="text-[10px] bg-slate-50 text-slate-500 px-1.5 py-0.5 rounded border border-slate-100">{tag}</span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {apt.type === 'surgery' && apt.surgeryChecklist && (
+                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 mb-3">
+                                <div className="flex items-center gap-2 mb-2 text-[10px] font-bold text-slate-400 uppercase">
+                                    <ClipboardList className="w-3 h-3" /> Checklist Pré-Op
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {Object.entries(apt.surgeryChecklist).map(([key, checked]) => (
+                                        <button 
+                                            key={key}
+                                            onClick={() => toggleChecklist(apt.id, key as any)}
+                                            className={`flex items-center gap-2 text-[10px] px-2 py-1.5 rounded-lg border transition-all ${
+                                                checked ? 'bg-green-100 border-green-200 text-green-800 font-bold' : 'bg-white border-slate-200 text-slate-400'
+                                            }`}
+                                        >
+                                            {checked ? <CheckCircle2 className="w-3 h-3" /> : <div className="w-3 h-3 rounded-full border-2 border-slate-300"></div>}
+                                            <span className="capitalize">{key === 'anesthetist' ? 'Anestesista' : key === 'fasting' ? 'Jejum' : key}</span>
+                                        </button>
                                     ))}
                                 </div>
                             </div>
+                        )}
 
-                            {/* Financial Toggle */}
-                            <button 
+                        <div className="flex justify-between items-center pt-3 border-t border-slate-50">
+                             <div className="flex gap-2">
+                                <button className="p-1.5 text-slate-400 bg-slate-50 rounded-lg hover:text-slate-600"><FileText className="w-4 h-4" /></button>
+                                <button className="p-1.5 text-slate-400 bg-slate-50 rounded-lg hover:text-slate-600"><Printer className="w-4 h-4" /></button>
+                             </div>
+                             
+                             <button 
                                 onClick={() => toggleFinancial(apt.id)}
-                                className={`flex flex-col items-end px-3 py-1 rounded-lg border transition-all ${
-                                    apt.financialStatus === 'paid' ? 'bg-green-50 border-green-200' : 
-                                    apt.financialStatus === 'insurance' ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border flex items-center gap-1.5 transition-all ${
+                                    apt.financialStatus === 'paid' ? 'bg-green-50 border-green-200 text-green-700' : 
+                                    apt.financialStatus === 'insurance' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-orange-50 border-orange-200 text-orange-700'
                                 }`}
                             >
-                                <span className={`text-[10px] font-bold uppercase ${
-                                    apt.financialStatus === 'paid' ? 'text-green-700' : 
-                                    apt.financialStatus === 'insurance' ? 'text-blue-700' : 'text-orange-700'
-                                }`}>
-                                    {apt.financialStatus === 'paid' ? 'Pago' : apt.financialStatus === 'insurance' ? 'Convênio' : 'Pendente'}
-                                </span>
-                                {apt.value && <span className="text-xs font-bold text-slate-900">R$ {apt.value}</span>}
+                                <DollarSign className="w-3 h-3" />
+                                {apt.financialStatus === 'paid' ? 'Pago' : apt.financialStatus === 'insurance' ? 'Convênio' : 'Pendente'}
                             </button>
                         </div>
-
-                        {/* Special Sections: Surgery Checklist & Actions */}
-                        <div className="flex flex-col gap-3">
-                            
-                            {/* Surgery Checklist */}
-                            {apt.type === 'surgery' && apt.surgeryChecklist && (
-                                <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                    <div className="flex items-center gap-2 mb-2 text-xs font-bold text-slate-500 uppercase">
-                                        <ClipboardList className="w-3 h-3" /> Checklist Pré-Op
-                                    </div>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                        {Object.entries(apt.surgeryChecklist).map(([key, checked]) => (
-                                            <button 
-                                                key={key}
-                                                onClick={() => toggleChecklist(apt.id, key as any)}
-                                                className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-lg border transition-all ${
-                                                    checked ? 'bg-green-100 border-green-200 text-green-800' : 'bg-white border-slate-200 text-slate-400'
-                                                }`}
-                                            >
-                                                {checked ? <CheckCircle2 className="w-3 h-3" /> : <div className="w-3 h-3 rounded-full border-2 border-slate-300"></div>}
-                                                <span className="capitalize">{key === 'anesthetist' ? 'Anestesista' : key === 'fasting' ? 'Jejum' : key}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Doc & Voice Actions */}
-                            <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-50">
-                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-                                    <Printer className="w-3 h-3" /> Receita
-                                </button>
-                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-                                    <FileText className="w-3 h-3" /> Atestado
-                                </button>
-                                <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:border-blue-400 hover:text-blue-600 transition-colors">
-                                    <Activity className="w-3 h-3" /> Pedido Exame
-                                </button>
-                                <div className="flex-1"></div>
-                                <button 
-                                    onClick={() => setRecordingId(recordingId === apt.id ? null : apt.id)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-                                        recordingId === apt.id ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                                    }`}
-                                >
-                                    {recordingId === apt.id ? <PauseCircle className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
-                                    {recordingId === apt.id ? 'Gravando...' : 'Nota de Voz'}
-                                </button>
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             )})}
@@ -336,28 +284,38 @@ const AppointmentScheduler = () => {
             {filteredAppointments.length === 0 && (
                 <div className="text-center py-12 text-slate-400">
                     <Calendar className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                    <p>Nenhum agendamento encontrado para este filtro.</p>
+                    <p className="text-sm font-medium">Nenhum agendamento encontrado.</p>
                 </div>
             )}
         </div>
 
         {/* Message Modal */}
         {selectedAppointment && (
-            <div className="fixed inset-0 bg-black/50 z-[60] flex items-end lg:items-center justify-center p-0 lg:p-4 animate-fadeIn">
-                <div className="bg-white w-full lg:max-w-md rounded-t-3xl lg:rounded-2xl p-6 shadow-2xl animate-slideUp">
-                    <div className="flex justify-between mb-4">
-                        <h3 className="font-bold text-lg">Mensagem WhatsApp</h3>
-                        <button onClick={() => setSelectedAppointment(null)}><X className="w-5 h-5" /></button>
+            <div className="fixed inset-0 bg-black/60 z-[70] flex items-end lg:items-center justify-center p-0 lg:p-4 animate-fadeIn backdrop-blur-sm">
+                <div className="bg-white w-full lg:max-w-md rounded-t-3xl lg:rounded-3xl p-6 shadow-2xl animate-slideUp">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="font-bold text-lg text-slate-900">Mensagem WhatsApp</h3>
+                        <button onClick={() => setSelectedAppointment(null)} className="p-2 bg-slate-100 rounded-full text-slate-500 hover:text-slate-900"><X className="w-5 h-5" /></button>
                     </div>
+                    
                     {isGenerating ? (
-                        <div className="h-32 flex items-center justify-center gap-2 text-blue-600 font-bold">
-                            <Sparkles className="w-5 h-5 animate-spin" /> Escrevendo com IA...
+                        <div className="h-40 flex flex-col items-center justify-center gap-3 text-blue-600 font-bold bg-blue-50 rounded-2xl border border-blue-100">
+                            <Sparkles className="w-8 h-8 animate-spin" /> 
+                            <span className="text-sm">Criando texto personalizado...</span>
                         </div>
                     ) : (
-                        <textarea value={generatedMessage} onChange={e => setGeneratedMessage(e.target.value)} className="w-full h-32 p-3 bg-slate-50 rounded-xl text-sm border-none mb-4 outline-none focus:ring-2 focus:ring-blue-500" />
+                        <textarea 
+                            value={generatedMessage} 
+                            onChange={e => setGeneratedMessage(e.target.value)} 
+                            className="w-full h-40 p-4 bg-slate-50 rounded-2xl text-base border-2 border-slate-100 outline-none focus:border-blue-500 focus:bg-white transition-all resize-none"
+                        />
                     )}
-                    <button onClick={() => window.open(`https://wa.me/${selectedAppointment.phone}?text=${encodeURIComponent(generatedMessage)}`)} className="w-full bg-green-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors">
-                        <Send className="w-4 h-4" /> Enviar Agora
+                    
+                    <button 
+                        onClick={() => window.open(`https://wa.me/${selectedAppointment.phone}?text=${encodeURIComponent(generatedMessage)}`)}
+                        className="w-full bg-[#25D366] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 mt-4 hover:brightness-105 active:scale-95 transition-all shadow-lg shadow-green-500/20"
+                    >
+                        <Send className="w-5 h-5" /> Enviar no WhatsApp
                     </button>
                 </div>
             </div>

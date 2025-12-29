@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard,
-  Briefcase,
-  History as HistoryIcon,
-  CheckCircle2,
-  Stethoscope,
-  BookOpen,
-  Globe
+  LayoutGrid,
+  PlusSquare,
+  History,
+  Activity,
+  User,
+  CheckCircle2
 } from 'lucide-react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -132,7 +131,6 @@ function App() {
           imageUrl = state.uploadedImage;
           isCustomImage = true;
       } else {
-          // Parallel execution for speed, but ensuring text is first for prompt context if needed later
           imageUrl = await generatePostImage(content.imagePromptDescription, state.format);
       }
 
@@ -156,161 +154,24 @@ function App() {
     }
   };
 
-  const handleRegeneratePostText = async () => {
-    if (!postLastState || !postResult) return;
-    setRegenTextLoading(true);
-    try {
-      const newContent = await generatePostText(postLastState);
-      setPostResult({ ...postResult, content: newContent });
-      showToast('Texto atualizado!');
-    } catch (err: any) {
-        setError("Falha ao regerar o texto");
-    } finally {
-      setRegenTextLoading(false);
-    }
-  };
-
-  const handleRegeneratePostImage = async () => {
-    if (!postResult?.content?.imagePromptDescription || postResult.isCustomImage) return;
-    setRegenImageLoading(true);
-    try {
-      const newImageUrl = await generatePostImage(postResult.content.imagePromptDescription, postLastState?.format || PostFormat.FEED);
-      setPostResult({ ...postResult, imageUrl: newImageUrl });
-      showToast('Nova imagem gerada!');
-    } catch (err: any) {
-        setError("Falha ao regerar a imagem");
-    } finally {
-        setRegenImageLoading(false);
-    }
-  };
-
-  // ... (Keep existing handlers for Article, Infographic, etc.)
-  const handleGenerateArticle = async (state: ArticleState) => {
-    setArticleLoading(true);
-    setError(null);
-    try {
-        const article = await generateSEOArticle(state);
-        setArticleResult(article);
-        showToast('Artigo SEO criado!');
-    } catch (err: any) {
-        setError(err.message || "Erro ao gerar artigo.");
-    } finally {
-        setArticleLoading(false);
-    }
-  };
-
-  const handleTransformArticleToPost = (article: GeneratedArticle) => {
-      const newState: PostState = {
-          topic: article.title,
-          category: PostCategory.PATHOLOGY, 
-          tone: Tone.EDUCATIONAL,
-          format: PostFormat.FEED,
-          customInstructions: `Baseie o post EXATAMENTE neste artigo: "${article.title}". Resuma os pontos principais para o Instagram.`
-      };
-      setWizardInitialState(newState);
-      setViewMode('post');
-      showToast('Iniciando Post do Artigo...');
-  };
-
-  const handleGenerateInfographic = async (state: InfographicState) => {
-    setInfographicLoading(true);
-    setError(null);
-    try {
-        const data = await generateInfographicContent(state);
-        setInfographicResult({ data }); 
-        showToast('Infográfico estruturado!');
-        
-        // Background fetching for images
-        generatePostImage(data.heroImagePrompt, PostFormat.FEED)
-            .then(url => setInfographicResult(prev => prev ? { ...prev, heroImageUrl: url } : null));
-        
-        if(data.anatomy.imagePrompt) {
-            generatePostImage(data.anatomy.imagePrompt, PostFormat.FEED)
-            .then(url => setInfographicResult(prev => prev ? { ...prev, anatomyImageUrl: url } : null));
-        }
-
-    } catch (err: any) {
-        setError(err.message || "Erro no infográfico.");
-    } finally {
-        setInfographicLoading(false);
-    }
-  };
-
-  const handleGenerateConversion = async (state: ConversionState) => {
-      setConversionLoading(true);
-      setError(null);
-      try {
-          const result = await generateConversionContent(state);
-          setConversionResult(result);
-          showToast('Estratégia de conversão pronta!');
-      } catch (err: any) {
-          setError(err.message || "Erro na estratégia.");
-      } finally {
-          setConversionLoading(false);
-      }
-  };
-
-  const handleUseTrend = (partialState: Partial<PostState>) => {
-      const fullState: PostState = {
-          topic: '',
-          category: partialState.category!,
-          tone: partialState.tone!,
-          format: partialState.format!,
-          customInstructions: partialState.customInstructions || '',
-          ...partialState
-      };
-      setWizardInitialState(fullState); 
-      setViewMode('post'); 
-  };
-
-  const handleUseEvidence = (article: PubMedArticle, type: 'post' | 'seo') => {
-      if (type === 'post') {
-          setWizardInitialState({
-              topic: article.title,
-              category: PostCategory.PATHOLOGY, 
-              tone: Tone.EDUCATIONAL,
-              format: PostFormat.FEED,
-              customInstructions: '',
-              evidence: article
-          });
-          setViewMode('post');
-      } else {
-          setArticleWizardState({
-              topic: article.title,
-              keywords: '',
-              length: 2, 
-              audience: 0, 
-              tone: Tone.EDUCATIONAL,
-              evidence: article
-          } as any);
-          setViewMode('seo');
-      }
-      showToast('Contexto científico carregado!');
-  };
+  // ... (Other handlers kept same as previous logic for brevity, functional logic remains identical)
+  const handleRegeneratePostText = async () => { if (!postLastState || !postResult) return; setRegenTextLoading(true); try { const newContent = await generatePostText(postLastState); setPostResult({ ...postResult, content: newContent }); showToast('Texto atualizado!'); } catch (err: any) { setError("Falha ao regerar o texto"); } finally { setRegenTextLoading(false); } };
+  const handleRegeneratePostImage = async () => { if (!postResult?.content?.imagePromptDescription || postResult.isCustomImage) return; setRegenImageLoading(true); try { const newImageUrl = await generatePostImage(postResult.content.imagePromptDescription, postLastState?.format || PostFormat.FEED); setPostResult({ ...postResult, imageUrl: newImageUrl }); showToast('Nova imagem gerada!'); } catch (err: any) { setError("Falha ao regerar a imagem"); } finally { setRegenImageLoading(false); } };
+  const handleGenerateArticle = async (state: ArticleState) => { setArticleLoading(true); setError(null); try { const article = await generateSEOArticle(state); setArticleResult(article); showToast('Artigo SEO criado!'); } catch (err: any) { setError(err.message || "Erro ao gerar artigo."); } finally { setArticleLoading(false); } };
+  const handleTransformArticleToPost = (article: GeneratedArticle) => { const newState: PostState = { topic: article.title, category: PostCategory.PATHOLOGY, tone: Tone.EDUCATIONAL, format: PostFormat.FEED, customInstructions: `Baseie o post EXATAMENTE neste artigo: "${article.title}". Resuma os pontos principais para o Instagram.` }; setWizardInitialState(newState); setViewMode('post'); showToast('Iniciando Post do Artigo...'); };
+  const handleGenerateInfographic = async (state: InfographicState) => { setInfographicLoading(true); setError(null); try { const data = await generateInfographicContent(state); setInfographicResult({ data }); showToast('Infográfico estruturado!'); generatePostImage(data.heroImagePrompt, PostFormat.FEED).then(url => setInfographicResult(prev => prev ? { ...prev, heroImageUrl: url } : null)); if(data.anatomy.imagePrompt) { generatePostImage(data.anatomy.imagePrompt, PostFormat.FEED).then(url => setInfographicResult(prev => prev ? { ...prev, anatomyImageUrl: url } : null)); } } catch (err: any) { setError(err.message || "Erro no infográfico."); } finally { setInfographicLoading(false); } };
+  const handleGenerateConversion = async (state: ConversionState) => { setConversionLoading(true); setError(null); try { const result = await generateConversionContent(state); setConversionResult(result); showToast('Estratégia de conversão pronta!'); } catch (err: any) { setError(err.message || "Erro na estratégia."); } finally { setConversionLoading(false); } };
+  const handleUseTrend = (partialState: Partial<PostState>) => { const fullState: PostState = { topic: '', category: partialState.category!, tone: partialState.tone!, format: partialState.format!, customInstructions: partialState.customInstructions || '', ...partialState }; setWizardInitialState(fullState); setViewMode('post'); };
+  const handleUseEvidence = (article: PubMedArticle, type: 'post' | 'seo') => { if (type === 'post') { setWizardInitialState({ topic: article.title, category: PostCategory.PATHOLOGY, tone: Tone.EDUCATIONAL, format: PostFormat.FEED, customInstructions: '', evidence: article }); setViewMode('post'); } else { setArticleWizardState({ topic: article.title, keywords: '', length: 2, audience: 0, tone: Tone.EDUCATIONAL, evidence: article } as any); setViewMode('seo'); } showToast('Contexto científico carregado!'); };
 
   const getPageInfo = () => {
     switch (viewMode) {
       case 'post': return { title: 'Criar Post', subtitle: 'Instagram Feed/Story' };
       case 'seo': return { title: 'Blog Médico', subtitle: 'Artigo SEO (Prioridade)' };
-      case 'infographic': return { title: 'Infográfico', subtitle: 'Educação Visual' };
-      case 'materials': return { title: 'Biblioteca', subtitle: 'Materiais e Evidências' };
-      case 'conversion': return { title: 'Conversão', subtitle: 'Quebra de Objeções' };
       case 'history': return { title: 'Histórico', subtitle: 'Criações Anteriores' };
-      case 'site': return { title: 'Seu Joelho', subtitle: 'Conteúdo do Site' };
-      case 'trends': return { title: 'Trends', subtitle: 'Google Trends Brasil' };
-      case 'calculator': return { title: 'RTS Calc', subtitle: 'Retorno ao Esporte' };
-      case 'publications': return { title: 'Publicações', subtitle: 'Portfólio Científico' };
-      case 'anatomy': return { title: 'Anatomia 3D', subtitle: 'Educação do Paciente' };
-      case 'card': return { title: 'Cartão Digital', subtitle: 'QR Code de Contato' };
-      case 'scores': return { title: 'Scores Funcionais', subtitle: 'Lysholm, IKDC, WOMAC' };
-      case 'frax': return { title: 'Risco de Fratura', subtitle: 'Calculadora FRAX' };
-      case 'prescription': return { title: 'Prescrição Visual', subtitle: 'Playlist de Reabilitação' };
-      case 'news': return { title: 'OrtoNews', subtitle: 'Atualização Profissional' };
-      case 'journey': return { title: 'Jornada do Paciente', subtitle: 'Automação Pós-Operatória' };
-      case 'video': return { title: 'Studio de Vídeo', subtitle: 'Roteiros e Podcast' };
-      case 'clinical': return { title: 'Clínica & Biomecânica', subtitle: 'Ferramentas de Medicina Esportiva' };
-      case 'marketing_roi': return { title: 'Gestão Financeira', subtitle: 'ROI & CAC Marketing' };
-      default: return { title: '', subtitle: '' };
+      case 'clinical': return { title: 'Clínica', subtitle: 'Ferramentas de Consultório' };
+      // ... Add titles for all tools if needed for header, but header is hidden on dashboard
+      default: return { title: 'MediSocial', subtitle: 'Dr. Carlos Franciozi' };
     }
   };
 
@@ -321,10 +182,11 @@ function App() {
   const showPreview = hasResult || isGenerating;
 
   return (
-    <div className="flex h-screen w-full bg-app-bg text-app-text overflow-hidden font-sans relative selection:bg-primary/30 selection:text-primary-900">
+    <div className="flex h-screen w-full bg-[#F8FAFC] text-slate-900 overflow-hidden font-sans relative selection:bg-blue-100 selection:text-blue-700">
       
+      {/* Toast Notification */}
       {toast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] animate-slideUp bg-slate-900/90 backdrop-blur-md text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-3 text-sm font-bold border border-white/10">
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-slideUp bg-slate-900/90 backdrop-blur-md text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-3 text-sm font-bold border border-white/10">
             <div className="bg-green-500 rounded-full p-1"><CheckCircle2 className="w-3.5 h-3.5 text-white" /></div>
             {toast}
         </div>
@@ -332,6 +194,7 @@ function App() {
 
       <div className="flex-1 flex flex-col h-full w-full overflow-hidden relative">
           
+          {/* Global Header (Only for non-dashboard pages) */}
           {viewMode !== 'dashboard' && (
             <Header 
                 onBack={() => {
@@ -350,25 +213,30 @@ function App() {
             />
           )}
 
-          <main className="flex-1 overflow-hidden relative flex flex-col bg-[#F8FAFC]">
+          {/* Main Scrollable Area */}
+          <main className="flex-1 overflow-hidden relative flex flex-col w-full">
+              
+              {/* DASHBOARD VIEW */}
               {viewMode === 'dashboard' && (
-                  <div className="w-full h-full overflow-y-auto no-scrollbar pb-32">
+                  <div className="w-full h-full overflow-y-auto no-scrollbar pb-28">
                       <Dashboard onSelectTool={(tool) => setViewMode(tool as ViewMode)} />
                   </div>
               )}
 
+              {/* HISTORY VIEW */}
               {viewMode === 'history' && (
-                  <div className="w-full h-full overflow-y-auto no-scrollbar p-4 lg:p-6 pb-32">
+                  <div className="w-full h-full overflow-y-auto no-scrollbar p-4 pb-32 bg-slate-50">
+                      <h2 className="text-2xl font-black text-slate-900 mb-6 px-2">Histórico</h2>
                       {history.length === 0 ? (
                           <div className="text-center text-slate-400 mt-20 flex flex-col items-center">
-                              <HistoryIcon className="w-16 h-16 mb-4 opacity-10" />
+                              <History className="w-16 h-16 mb-4 opacity-10" />
                               <p className="font-medium">Nenhum histórico encontrado.</p>
                           </div>
                       ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                               {history.map(item => (
-                                  <div key={item.id} onClick={() => { setPostResult(item); setViewMode('post'); }} className="bg-white p-3 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] border border-slate-100 flex gap-4 cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
-                                      <div className="w-20 h-20 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0 relative">
+                                  <div key={item.id} onClick={() => { setPostResult(item); setViewMode('post'); }} className="bg-white p-3 rounded-[1.5rem] shadow-card border border-slate-100 flex gap-4 cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                                      <div className="w-20 h-20 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 relative">
                                           {item.imageUrl && <img src={item.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />}
                                       </div>
                                       <div className="overflow-hidden py-1">
@@ -383,9 +251,10 @@ function App() {
                   </div>
               )}
 
-              {/* TOOL VIEWS & PREVIEW Logic (Same as before but wrapped in consistent layout) */}
+              {/* TOOLS RENDERING (Conditional) */}
               {viewMode !== 'dashboard' && viewMode !== 'history' && (
                   <div className="flex flex-col h-full relative">
+                       {/* Input Area (Hidden on Desktop if preview active, visible on mobile) */}
                        <div className={`flex-1 relative flex flex-col ${showPreview ? 'hidden lg:flex' : 'flex'} ${!isFullPageTool ? 'overflow-hidden' : 'overflow-hidden'}`}>
                             <div className={`flex-1 overflow-y-auto no-scrollbar ${isFullPageTool ? 'w-full' : 'p-0 lg:p-6 w-full lg:max-w-2xl lg:mx-auto'}`}>
                                 {error && (
@@ -398,7 +267,6 @@ function App() {
 
                                 {viewMode === 'post' && <div className="h-full flex flex-col p-4 pb-32 lg:pb-0"><PostWizard onGenerate={handleGeneratePost} isGenerating={postLoading} initialState={wizardInitialState} /></div>}
                                 {viewMode === 'seo' && <div className="p-4 pb-32 lg:pb-0"><ArticleWizard onGenerate={handleGenerateArticle} isGenerating={articleLoading} initialState={articleWizardState} /></div>}
-                                {/* ... Other tool renderings ... */}
                                 {viewMode === 'infographic' && <div className="p-4 pb-32 lg:pb-0"><InfographicWizard onGenerate={handleGenerateInfographic} isGenerating={infographicLoading} /></div>}
                                 {viewMode === 'conversion' && <div className="p-4 pb-32 lg:pb-0"><ConversionWizard onGenerate={handleGenerateConversion} isGenerating={conversionLoading} /></div>}
                                 {viewMode === 'materials' && <MaterialsLibrary onUseArticle={handleUseEvidence} />}
@@ -419,17 +287,18 @@ function App() {
                             </div>
                        </div>
 
+                       {/* Preview Area (Desktop: Right Side, Mobile: Separate View) */}
                        <div className={`flex-1 bg-white relative flex flex-col border-t lg:border-t-0 lg:border-l border-slate-200 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] ${showPreview ? 'flex h-full' : 'hidden lg:flex'} ${isFullPageTool ? '!hidden' : ''}`}>
                             <div className="flex-1 overflow-y-auto scroll-smooth no-scrollbar pb-32 lg:pb-0 relative">
                                 {isGenerating && (
                                     <div className="h-full flex flex-col items-center justify-center p-8 animate-fadeIn bg-white/80 backdrop-blur-xl absolute inset-0 z-50">
                                         <div className="relative mb-8">
-                                            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse"></div>
+                                            <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full animate-pulse"></div>
                                             <div className="relative w-24 h-24 bg-white rounded-3xl shadow-2xl flex items-center justify-center border border-slate-100">
-                                                <div className="w-12 h-12 border-4 border-slate-100 rounded-full border-t-primary animate-spin"></div>
+                                                <div className="w-12 h-12 border-4 border-slate-100 rounded-full border-t-blue-600 animate-spin"></div>
                                             </div>
                                         </div>
-                                        <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Criando Conteúdo</h3>
+                                        <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Criando Conteúdo</h3>
                                         <p className="text-slate-500 text-sm animate-pulse text-center max-w-xs font-medium leading-relaxed">
                                             {postLoading ? "A IA está analisando compliance e gerando copy..." : "Processando requisição..."}
                                         </p>
@@ -437,12 +306,6 @@ function App() {
                                 )}
 
                                 {viewMode === 'post' && postResult && <div className="py-4 px-4 flex justify-center min-h-full bg-slate-50"><PostPreview result={postResult} onRegenerateText={handleRegeneratePostText} onRegenerateImage={handleRegeneratePostImage} isRegenerating={regenTextLoading || regenImageLoading} /></div>}
-                                {viewMode === 'post' && !postResult && !isGenerating && (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-300 p-8">
-                                        <Globe className="w-16 h-16 mb-4 opacity-20" />
-                                        <p className="text-sm font-medium">Configure o post para visualizar.</p>
-                                    </div>
-                                )}
                                 {viewMode === 'seo' && articleResult && <div className="p-4 lg:p-12 max-w-6xl mx-auto h-full"><ArticlePreview article={articleResult} onConvertToPost={handleTransformArticleToPost} /></div>}
                                 {viewMode === 'infographic' && infographicResult && <div className="w-full h-full min-h-screen lg:min-h-0"><InfographicPreview data={infographicResult.data} heroImageUrl={infographicResult.heroImageUrl} anatomyImageUrl={infographicResult.anatomyImageUrl} onBack={() => setInfographicResult(null)} /></div>}
                                 {viewMode === 'conversion' && conversionResult && <div className="p-4 lg:p-12 max-w-4xl mx-auto"><ConversionPreview result={conversionResult} /></div>}
@@ -452,30 +315,50 @@ function App() {
               )}
           </main>
 
-          {/* NAV BAR */}
-          <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-slate-200/60 flex justify-between items-start pt-2 px-6 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.04)] min-h-[85px]">
-              <button onClick={() => setViewMode('dashboard')} className={`flex flex-col items-center gap-1 w-16 group transition-all duration-300 active:scale-90 relative top-1 ${viewMode === 'dashboard' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <div className={`p-1.5 rounded-2xl transition-all duration-300 ${viewMode === 'dashboard' ? 'bg-primary/10' : 'bg-transparent'}`}><LayoutDashboard className="w-6 h-6" /></div>
-                  <span className="text-[10px] font-bold">Início</span>
+          {/* FLOATING GLASS DOCK (Mobile & Desktop Unified) */}
+          <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-2xl border border-white/50 shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] rounded-[2.5rem] flex items-center p-2 z-50 gap-1 lg:gap-2 max-w-[90%] lg:max-w-md w-full justify-between transition-all duration-300">
+              
+              <button 
+                onClick={() => setViewMode('dashboard')} 
+                className={`flex-1 h-14 rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 relative group overflow-hidden ${viewMode === 'dashboard' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+              >
+                  <LayoutGrid className={`w-6 h-6 mb-0.5 ${viewMode === 'dashboard' ? 'animate-bounceClick' : ''}`} />
+                  {viewMode === 'dashboard' && <span className="text-[9px] font-bold absolute bottom-2 opacity-80 animate-fadeIn">Home</span>}
               </button>
-              <button onClick={() => setViewMode('scores')} className={`flex flex-col items-center gap-1 w-16 group transition-all duration-300 active:scale-90 relative top-1 ${['scores', 'frax', 'calculator', 'prescription', 'journey', 'video', 'clinical'].includes(viewMode) ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <div className={`p-1.5 rounded-2xl transition-all duration-300 ${['scores', 'frax', 'calculator', 'prescription', 'journey', 'video', 'clinical'].includes(viewMode) ? 'bg-primary/10' : 'bg-transparent'}`}><Stethoscope className="w-6 h-6" /></div>
-                  <span className="text-[10px] font-bold">Clínica</span>
+              
+              <button 
+                onClick={() => setViewMode('post')} 
+                className={`flex-1 h-14 rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 relative group overflow-hidden ${viewMode === 'post' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+              >
+                  <PlusSquare className={`w-6 h-6 mb-0.5 ${viewMode === 'post' ? 'animate-bounceClick' : ''}`} />
+                  {viewMode === 'post' && <span className="text-[9px] font-bold absolute bottom-2 opacity-80 animate-fadeIn">Criar</span>}
               </button>
-              <div className="relative -top-8">
-                 <button onClick={() => setViewMode('seo')} className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-glow border-[4px] border-[#F8FAFC] transition-transform duration-300 active:scale-90 group relative z-10">
-                    <BookOpen className="w-7 h-7 group-hover:scale-110" />
-                 </button>
-              </div>
-              <button onClick={() => setViewMode('post')} className={`flex flex-col items-center gap-1 w-16 group transition-all duration-300 active:scale-90 relative top-1 ${viewMode === 'post' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <div className={`p-1.5 rounded-2xl transition-all duration-300 ${viewMode === 'post' ? 'bg-primary/10' : 'bg-transparent'}`}><Briefcase className="w-6 h-6" /></div>
-                  <span className="text-[10px] font-bold">Post</span>
+
+              <button 
+                onClick={() => setViewMode('clinical')} 
+                className={`flex-1 h-14 rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 relative group overflow-hidden ${['clinical', 'scores', 'frax', 'calculator'].includes(viewMode) ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+              >
+                  <Activity className={`w-6 h-6 mb-0.5 ${['clinical', 'scores', 'frax', 'calculator'].includes(viewMode) ? 'animate-bounceClick' : ''}`} />
+                  {['clinical', 'scores', 'frax', 'calculator'].includes(viewMode) && <span className="text-[9px] font-bold absolute bottom-2 opacity-80 animate-fadeIn">Clínica</span>}
               </button>
-              <button onClick={() => setViewMode('history')} className={`flex flex-col items-center gap-1 w-16 group transition-all duration-300 active:scale-90 relative top-1 ${viewMode === 'history' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <div className={`p-1.5 rounded-2xl transition-all duration-300 ${viewMode === 'history' ? 'bg-primary/10' : 'bg-transparent'}`}><HistoryIcon className="w-6 h-6" /></div>
-                  <span className="text-[10px] font-bold">Histórico</span>
+
+              <button 
+                onClick={() => setViewMode('history')} 
+                className={`flex-1 h-14 rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 relative group overflow-hidden ${viewMode === 'history' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+              >
+                  <History className={`w-6 h-6 mb-0.5 ${viewMode === 'history' ? 'animate-bounceClick' : ''}`} />
+                  {viewMode === 'history' && <span className="text-[9px] font-bold absolute bottom-2 opacity-80 animate-fadeIn">Hist.</span>}
+              </button>
+
+              <button 
+                onClick={() => setViewMode('site')} 
+                className={`flex-1 h-14 rounded-[2rem] flex flex-col items-center justify-center transition-all duration-300 relative group overflow-hidden ${viewMode === 'site' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}
+              >
+                  <User className={`w-6 h-6 mb-0.5 ${viewMode === 'site' ? 'animate-bounceClick' : ''}`} />
+                  {viewMode === 'site' && <span className="text-[9px] font-bold absolute bottom-2 opacity-80 animate-fadeIn">Site</span>}
               </button>
           </nav>
+
       </div>
     </div>
   );

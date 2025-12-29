@@ -19,7 +19,9 @@ export enum PostCategory {
 export enum PostFormat {
   FEED = 'Feed (Quadrado)',
   STORY = 'Story (Vertical)',
-  REMIX = 'Remix (Feed + Story + Thread)', // NEW
+  REMIX = 'Remix (Feed + Story + Thread)',
+  YOUTUBE_SCRIPT = 'Roteiro YouTube (Longo)', 
+  PODCAST_OUTLINE = 'Pauta de Podcast', 
 }
 
 export enum ArticleLength {
@@ -41,6 +43,53 @@ export enum PatientProfile {
   ELDERLY = 'Idoso',
   ATHLETE = 'Atleta de Alta Performance',
   SEDENTARY = 'Sedentário',
+}
+
+// --- USER PERSONA (NEW) ---
+export interface UserProfile {
+  name: string;
+  specialty: string;
+  crm: string;
+  defaultTone: Tone;
+  bio?: string; // Short bio to inject context
+}
+
+// --- NEWS TYPES ---
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  category: 'Industry' | 'Clinical' | 'Event' | 'Tech';
+  source: string;
+  date: string;
+  url?: string;
+}
+
+// --- CLINICAL TOOLS TYPES (NEW) ---
+
+export interface WoundAnalysisResult {
+  riskLevel: 'Baixo' | 'Moderado' | 'Alto';
+  signs: string[];
+  recommendation: string;
+  disclaimer: string;
+}
+
+export interface DrugInteractionResult {
+  hasInteraction: boolean;
+  severity: 'Nenhuma' | 'Leve' | 'Moderada' | 'Grave';
+  details: string;
+  recommendation: string;
+}
+
+export interface SupplementPlan {
+  injuryType: string;
+  supplements: Array<{
+    name: string;
+    dosage: string;
+    reason: string;
+    timing: string;
+  }>;
 }
 
 // --- COMPLIANCE AUDIT TYPES ---
@@ -107,6 +156,33 @@ export interface GeneratedArticle {
   wordCount: number;
   seoSuggestions: string[];
   keywordsUsed: string[];
+}
+
+// --- VIDEO & PODCAST TYPES ---
+
+export interface VideoState {
+  topic: string;
+  targetAudience: TargetAudience;
+  tone: Tone;
+  customInstructions?: string;
+  evidence?: PubMedArticle;
+}
+
+export interface VideoScriptSection {
+  type: 'HOOK' | 'VINHETA' | 'INTRO' | 'CONTEUDO' | 'OBJECAO' | 'CTA' | 'OUTRO';
+  duration: string;
+  visual: string; // Camera/B-Roll instructions
+  audio: string; // Spoken script
+  notes?: string;
+}
+
+export interface VideoScriptResult {
+  title: string;
+  thumbnailText: string;
+  thumbnailVisual: string;
+  description: string;
+  tags: string[];
+  script: VideoScriptSection[];
 }
 
 // --- INFOGRAPHIC TYPES ---
@@ -240,6 +316,31 @@ export interface MessageTemplateState {
   customNote?: string;
 }
 
+// --- PROTOCOL / PATIENT JOURNEY TYPES ---
+
+export type ProtocolType = 'LCA' | 'ATJ' | 'MENISCO' | 'OMBRO';
+
+export interface ProtocolStep {
+  dayOffset: number; // 0 = surgery day, 1 = day after, etc.
+  title: string;
+  description: string;
+  type: 'message' | 'appointment' | 'rehab' | 'exam';
+  actionLabel?: string;
+}
+
+export interface PatientJourneyState {
+  patientName: string;
+  surgeryDate: string;
+  protocolType: ProtocolType;
+  tone: Tone;
+}
+
+export interface TimelineEvent extends ProtocolStep {
+  id: string;
+  calculatedDate: string;
+  generatedMessage?: string; // AI generated personalized message
+}
+
 // --- TRENDS & ANALYTICS ---
 
 export interface TrendTopic {
@@ -285,7 +386,8 @@ export interface GeneratedResult {
   content?: GeneratedPostContent; // Legacy support
   imageUrl: string | null;
   isCustomImage: boolean;
-  type: 'post' | 'article' | 'infographic' | 'conversion';
+  type: 'post' | 'article' | 'infographic' | 'conversion' | 'video'; // Added 'video'
+  videoScript?: VideoScriptResult; // Added for video results
 }
 
 // --- RTS CALCULATOR TYPES ---

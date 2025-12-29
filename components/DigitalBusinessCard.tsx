@@ -34,7 +34,7 @@ NOTE:${doctorData.crm}
 X-SOCIALPROFILE;type=whatsapp:${whatsappUrl}
 END:VCARD`;
 
-  // Encode for URL (QR points to WhatsApp now)
+  // Encode for URL
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(whatsappUrl)}`;
 
   const handleShare = async () => {
@@ -49,27 +49,25 @@ END:VCARD`;
         console.log('Error sharing', error);
       }
     } else {
-      // Fallback to copying link
       navigator.clipboard.writeText(whatsappUrl);
       alert("Link do WhatsApp copiado!");
     }
   };
 
   return (
-    <div className="h-full bg-slate-50 flex flex-col items-center justify-center p-6 animate-fadeIn pb-24 lg:pb-0">
+    <div className="h-full bg-slate-50 flex flex-col items-center justify-center p-4 animate-fadeIn pb-24 lg:pb-0 overflow-y-auto no-scrollbar">
       
-      <div className="w-full max-w-sm relative group perspective-1000">
+      <div className="w-full max-w-sm relative group perspective-1000 my-auto">
         
         {/* Card Container */}
-        <div className="bg-white rounded-[2rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden relative">
+        <div className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] border border-slate-100 overflow-hidden relative">
             
             {/* Header / Brand Background */}
-            <div className="h-32 bg-slate-900 relative">
+            <div className="h-36 bg-slate-900 relative">
                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-900 to-slate-900 opacity-90"></div>
-                {/* Abstract Patterns */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-[60px] opacity-20"></div>
+                <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500 rounded-full blur-[80px] opacity-20"></div>
                 
-                <div className="relative z-10 flex flex-col items-center justify-center h-full pt-4">
+                <div className="relative z-10 flex flex-col items-center justify-center h-full pt-2">
                     <img 
                         src="https://seujoelho.com/wp-content/uploads/2021/03/02_seu_joelho_logotipo-1-2048x534.png" 
                         alt="Seu Joelho" 
@@ -79,10 +77,10 @@ END:VCARD`;
             </div>
 
             {/* Content */}
-            <div className="px-8 pb-8 pt-0 flex flex-col items-center text-center relative z-10 -mt-12">
+            <div className="px-6 pb-8 pt-0 flex flex-col items-center text-center relative z-10 -mt-14">
                 
                 {/* Profile Picture */}
-                <div className="w-24 h-24 rounded-full p-1 bg-white shadow-lg mb-4">
+                <div className="w-28 h-28 rounded-full p-1.5 bg-white shadow-xl mb-4">
                     <img 
                         src="https://seujoelho.com/wp-content/uploads/2021/01/Dr-Carlos-Franciozi-781x1024.jpg" 
                         className="w-full h-full rounded-full object-cover object-top bg-slate-100"
@@ -91,39 +89,34 @@ END:VCARD`;
                 </div>
 
                 {/* Name & Title */}
-                <h1 className="text-xl font-black text-slate-900 leading-tight">{doctorData.name}</h1>
-                <p className="text-sm font-medium text-blue-600 mb-1">{doctorData.title}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">{doctorData.crm}</p>
+                <h1 className="text-2xl font-black text-slate-900 leading-tight mb-1">{doctorData.name}</h1>
+                <p className="text-sm font-bold text-blue-600 mb-2">{doctorData.title}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full mb-6 border border-slate-100">{doctorData.crm}</p>
 
-                {/* QR Code */}
-                <div className="bg-white p-2 rounded-xl border border-slate-100 shadow-inner mb-6 relative group/qr cursor-pointer" onClick={() => window.open(whatsappUrl, '_blank')}>
-                    <img src={qrCodeUrl} alt="QR Code WhatsApp" className="w-48 h-48 rounded-lg mix-blend-multiply" />
-                    
-                    {/* Scan Icon Overlay */}
-                    <div className="absolute -bottom-3 -right-3 bg-green-500 text-white p-2 rounded-full shadow-lg border-2 border-white">
-                        <MessageCircle className="w-5 h-5" />
+                {/* QR Code Area */}
+                <div className="w-full bg-slate-50 p-4 rounded-3xl border border-slate-100 mb-6 flex items-center gap-4 shadow-inner">
+                    <div className="bg-white p-2 rounded-xl shadow-sm cursor-pointer" onClick={() => window.open(whatsappUrl, '_blank')}>
+                        <img src={qrCodeUrl} alt="QR" className="w-20 h-20 rounded-lg mix-blend-multiply" />
                     </div>
-                </div>
-
-                {/* Instructions */}
-                <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-4 py-2 rounded-full mb-6">
-                    <Smartphone className="w-4 h-4" />
-                    Aponte para iniciar conversa no WhatsApp
+                    <div className="text-left flex-1">
+                        <p className="text-xs font-bold text-slate-900 mb-1">Escaneie para Whats</p>
+                        <p className="text-[10px] text-slate-500 leading-snug">Aponte a câmera do celular ou toque no código.</p>
+                    </div>
                 </div>
 
                 {/* Action Buttons */}
                 <div className="grid grid-cols-2 gap-3 w-full">
                     <button 
                         onClick={handleShare}
-                        className="flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors shadow-lg active:scale-95"
+                        className="flex items-center justify-center gap-2 bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20 active:scale-95"
                     >
-                        <Share2 className="w-4 h-4" /> Enviar
+                        <Share2 className="w-4 h-4" /> Compartilhar
                     </button>
                     
                     <a 
                         href={`data:text/vcard;charset=utf-8,${encodeURIComponent(vCardData)}`} 
                         download="Dr_Carlos_Franciozi.vcf"
-                        className="flex items-center justify-center gap-2 bg-blue-50 text-blue-700 py-3 rounded-xl font-bold text-sm hover:bg-blue-100 transition-colors border border-blue-100 active:scale-95"
+                        className="flex items-center justify-center gap-2 bg-white text-slate-700 border-2 border-slate-100 py-4 rounded-2xl font-bold text-sm hover:border-slate-200 transition-all active:scale-95"
                     >
                         <Download className="w-4 h-4" /> Salvar Contato
                     </a>
@@ -132,10 +125,9 @@ END:VCARD`;
             </div>
         </div>
 
-        {/* Brand Footer */}
-        <div className="mt-6 text-center opacity-60">
-             <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400 flex items-center justify-center gap-2">
-                <QrCode className="w-3 h-3" /> Conexão Direta
+        <div className="mt-6 text-center">
+             <p className="text-[10px] uppercase font-bold tracking-widest text-slate-300 flex items-center justify-center gap-2">
+                <QrCode className="w-3 h-3" /> Cartão Digital V3.0
              </p>
         </div>
 

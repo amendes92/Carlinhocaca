@@ -65,27 +65,26 @@ const TrendAnalyzer: React.FC<TrendAnalyzerProps> = ({ onUseTrend }) => {
   return (
     <div className="h-full flex flex-col animate-fadeIn bg-slate-50">
         
-        {/* Sticky Header with Controls */}
-        <div className="bg-white/80 backdrop-blur-md px-5 py-4 border-b border-slate-100 sticky top-0 z-10 flex justify-between items-center">
-            <div>
-                <h1 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-blue-600" />
-                    Radar de Trends
-                </h1>
-                <p className="text-xs text-slate-500 font-medium">Em alta no Google Brasil 🇧🇷</p>
-            </div>
-            <button 
-                onClick={fetchTrends}
-                disabled={loading}
-                className="p-2.5 bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl transition-all active:scale-95 disabled:opacity-50"
-            >
-                <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-            </button>
-        </div>
-
         {/* Content - Fully Scrollable without nested truncation */}
         <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-4">
             
+            {/* Intro Banner with Refresh */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+                <div>
+                    <h2 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-blue-600" /> Google Trends Brasil 🇧🇷
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">Assuntos em alta nas últimas 24h.</p>
+                </div>
+                <button 
+                    onClick={fetchTrends}
+                    disabled={loading}
+                    className="p-2 bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-600 rounded-lg transition-colors active:scale-95 disabled:opacity-50"
+                >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                </button>
+            </div>
+
             {loading ? (
                 <RadarLoading />
             ) : (

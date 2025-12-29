@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
 import { searchPubMed } from '../services/pubmedService';
+import { searchLocalPublications, mapLocalPublicationToPubMed } from '../services/publicationsData';
 import { PubMedArticle } from '../types';
-import { Search, BookOpen, ExternalLink, Loader2, FileText, FlaskConical, Instagram, PenTool } from 'lucide-react';
+import { Search, BookOpen, ExternalLink, Loader2, FileText, FlaskConical, Instagram, PenTool, Crown } from 'lucide-react';
 
 interface EvidenceFinderProps {
     onUseArticle?: (article: PubMedArticle, type: 'post' | 'seo') => void;
@@ -18,9 +19,19 @@ const EvidenceFinder: React.FC<EvidenceFinderProps> = ({ onUseArticle }) => {
     if (!query.trim()) return;
     setLoading(true);
     setSearched(true);
+    setResults([]);
+
     try {
-        const articles = await searchPubMed(query);
-        setResults(articles);
+        // 1. Search Local Publications (Dr. Carlos's papers)
+        const localMatches = searchLocalPublications(query);
+        const mappedLocal = localMatches.map(mapLocalPublicationToPubMed);
+
+        // 2. Search PubMed (External)
+        const apiResults = await searchPubMed(query);
+
+        // 3. Combine (Local first)
+        setResults([...mappedLocal, ...apiResults]);
+
     } catch (e) {
         console.error(e);
     } finally {
@@ -32,6 +43,11 @@ const EvidenceFinder: React.FC<EvidenceFinderProps> = ({ onUseArticle }) => {
       if (e.key === 'Enter') handleSearch();
   };
 
+  const isAuthorPaper = (article: PubMedArticle) => {
+      return article.abstract?.includes("[ARTIGO AUTORAL DO DR. CARLOS FRANCIOZI]") || 
+             article.authors.some(a => a.name.toLowerCase().includes('franciozi'));
+  };
+
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full max-h-[600px]">
         {/* Header */}
@@ -41,8 +57,8 @@ const EvidenceFinder: React.FC<EvidenceFinderProps> = ({ onUseArticle }) => {
                     <FlaskConical className="w-4 h-4" />
                 </div>
                 <div>
-                    <h3 className="font-bold text-slate-900 leading-none">PubMed RAG</h3>
-                    <p className="text-[10px] text-slate-500">Geração Baseada em Evidência</p>
+                    <h3 className="font-bold text-slate-900 leading-none">PubMed RAG + Autoral</h3>
+                    <p className="text-[10px] text-slate-500">Busca em artigos próprios e PubMed</p>
                 </div>
             </div>
             <div className="relative">
@@ -51,7 +67,7 @@ const EvidenceFinder: React.FC<EvidenceFinderProps> = ({ onUseArticle }) => {
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ex: ACL reconstruction outcomes..."
+                    placeholder="Ex: ACL reconstruction, Meniscus..."
                     className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 />
                 <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
@@ -74,56 +90,67 @@ const EvidenceFinder: React.FC<EvidenceFinderProps> = ({ onUseArticle }) => {
                          <FlaskConical className="w-8 h-8 text-blue-600 animate-bounce relative z-10" />
                     </div>
                     <p className="text-xs font-bold text-slate-600">Consultando Base Científica...</p>
-                    <p className="text-[10px] text-slate-400">NCBI / PubMed Database</p>
+                    <p className="text-[10px] text-slate-400">Priorizando publicações do autor...</p>
                 </div>
             ) : results.length > 0 ? (
                 <div className="space-y-3 p-1">
-                    {results.map(article => (
-                        <div key={article.uid} className="bg-white p-3 rounded-xl border border-slate-100 hover:border-blue-200 transition-colors shadow-sm group animate-slideUp">
-                            <h4 className="font-bold text-slate-800 text-sm mb-1 leading-snug line-clamp-2">{article.title}</h4>
-                            <div className="flex flex-wrap gap-2 text-[10px] text-slate-500 mb-3">
-                                <span className="font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{article.source}</span>
-                                <span>{article.pubdate}</span>
-                                <span className="truncate max-w-[150px]">{article.authors?.[0]?.name} et al.</span>
-                            </div>
-                            
-                            {/* Abstract Preview */}
-                            {article.abstract && (
-                                <p className="text-[10px] text-slate-400 line-clamp-2 mb-3 italic">
-                                    {article.abstract.substring(0, 100)}...
-                                </p>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex items-center gap-2 pt-2 border-t border-slate-50">
-                                {onUseArticle && (
-                                    <>
-                                        <button 
-                                            onClick={() => onUseArticle(article, 'post')}
-                                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold hover:bg-slate-700 transition-colors"
-                                        >
-                                            <Instagram className="w-3 h-3" /> Post
-                                        </button>
-                                        <button 
-                                            onClick={() => onUseArticle(article, 'seo')}
-                                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-bold hover:bg-blue-100 transition-colors"
-                                        >
-                                            <PenTool className="w-3 h-3" /> Artigo
-                                        </button>
-                                    </>
+                    {results.map(article => {
+                        const isMyPaper = isAuthorPaper(article);
+                        return (
+                            <div key={article.uid} className={`relative p-3 rounded-xl border transition-colors shadow-sm group animate-slideUp ${isMyPaper ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-100 hover:border-blue-200'}`}>
+                                
+                                {isMyPaper && (
+                                    <div className="absolute -top-2 -right-2 bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm z-10">
+                                        <Crown className="w-3 h-3 text-yellow-300 fill-yellow-300" />
+                                        Minha Publicação
+                                    </div>
                                 )}
-                                <a 
-                                    href={article.url} 
-                                    target="_blank" 
-                                    rel="noreferrer"
-                                    className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
-                                    title="Abrir no PubMed"
-                                >
-                                    <ExternalLink className="w-4 h-4" />
-                                </a>
+
+                                <h4 className={`font-bold text-sm mb-1 leading-snug line-clamp-2 ${isMyPaper ? 'text-indigo-900' : 'text-slate-800'}`}>{article.title}</h4>
+                                <div className="flex flex-wrap gap-2 text-[10px] text-slate-500 mb-3">
+                                    <span className={`font-semibold px-1.5 py-0.5 rounded ${isMyPaper ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-50 text-blue-600'}`}>{article.source}</span>
+                                    <span>{article.pubdate}</span>
+                                    <span className="truncate max-w-[150px]">{article.authors?.[0]?.name} et al.</span>
+                                </div>
+                                
+                                {/* Abstract Preview */}
+                                {article.abstract && (
+                                    <p className="text-[10px] text-slate-400 line-clamp-2 mb-3 italic">
+                                        {article.abstract.substring(0, 100)}...
+                                    </p>
+                                )}
+
+                                {/* Actions */}
+                                <div className={`flex items-center gap-2 pt-2 border-t ${isMyPaper ? 'border-indigo-100' : 'border-slate-50'}`}>
+                                    {onUseArticle && (
+                                        <>
+                                            <button 
+                                                onClick={() => onUseArticle(article, 'post')}
+                                                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-slate-900 text-white rounded-lg text-[10px] font-bold hover:bg-slate-700 transition-colors"
+                                            >
+                                                <Instagram className="w-3 h-3" /> Post
+                                            </button>
+                                            <button 
+                                                onClick={() => onUseArticle(article, 'seo')}
+                                                className="flex-1 flex items-center justify-center gap-1.5 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-bold hover:bg-blue-100 transition-colors"
+                                            >
+                                                <PenTool className="w-3 h-3" /> Artigo
+                                            </button>
+                                        </>
+                                    )}
+                                    <a 
+                                        href={article.url} 
+                                        target="_blank" 
+                                        rel="noreferrer"
+                                        className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors"
+                                        title="Abrir no PubMed"
+                                    >
+                                        <ExternalLink className="w-4 h-4" />
+                                    </a>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : searched ? (
                 <div className="flex flex-col items-center justify-center h-40 text-slate-400">

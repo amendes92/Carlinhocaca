@@ -1,5 +1,5 @@
 
-import { ScientificPublication } from '../types';
+import { ScientificPublication, PubMedArticle } from '../types';
 
 export const publicationsData: ScientificPublication[] = [
     {
@@ -713,4 +713,28 @@ export const publicationsData: ScientificPublication[] = [
       "pmid": "18711658",
       "link": "https://pubmed.ncbi.nlm.nih.gov/18711658/"
     }
-]
+];
+
+// Helper to filter local publications
+export const searchLocalPublications = (query: string): ScientificPublication[] => {
+    if (!query) return [];
+    const term = query.toLowerCase();
+    return publicationsData.filter(pub => 
+        pub.titulo.toLowerCase().includes(term) ||
+        pub.autores.toLowerCase().includes(term)
+    );
+};
+
+// Mapper to convert ScientificPublication to PubMedArticle format for compatibility
+export const mapLocalPublicationToPubMed = (pub: ScientificPublication): PubMedArticle => {
+    return {
+        uid: pub.pmid,
+        title: pub.titulo,
+        source: pub.journal,
+        pubdate: pub.ano,
+        authors: pub.autores.split(', ').map(name => ({ name })),
+        volume: '',
+        url: pub.link,
+        abstract: `[ARTIGO AUTORAL DO DR. CARLOS FRANCIOZI] - Título: ${pub.titulo}. Publicado em: ${pub.journal}, ${pub.ano}. Autores: ${pub.autores}. Este é um trabalho original do autor.`
+    };
+};

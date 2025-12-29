@@ -42,12 +42,8 @@ interface MaterialsLibraryProps {
 
 const MaterialsLibrary: React.FC<MaterialsLibraryProps> = ({ onUseArticle }) => {
   return (
-    <div className="space-y-6 md:space-y-8 animate-fadeIn pb-24 lg:pb-12">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Biblioteca & Compliance</h1>
-        <p className="text-slate-500 mt-1 text-sm md:text-base">Materiais educativos e diretrizes do CFM.</p>
-      </div>
-
+    <div className="space-y-6 md:space-y-8 animate-fadeIn pb-24 lg:pb-12 p-6">
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Main Materials Grid */}

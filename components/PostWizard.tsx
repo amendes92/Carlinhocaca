@@ -2,31 +2,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { PostCategory, Tone, PostState, PostFormat } from '../types';
 import { 
-    HeartPulse, 
-    BriefcaseMedical, 
-    Activity, 
-    User, 
-    ShieldCheck, 
-    HelpCircle, 
-    Search,
-    Sparkles,
-    Image as ImageIcon,
-    Smartphone,
-    LayoutGrid,
-    AlertCircle,
-    ArrowRight,
-    ArrowLeft,
-    Check,
-    Wand2,
-    Flame,
-    Zap,
-    FlaskConical
+    HeartPulse, BriefcaseMedical, Activity, User, ShieldCheck, HelpCircle, 
+    Search, Sparkles, Image as ImageIcon, Smartphone, LayoutGrid, 
+    AlertCircle, ArrowRight, ArrowLeft, Check, Wand2, Flame, Zap, FlaskConical, AlertTriangle
 } from 'lucide-react';
 
 interface PostWizardProps {
   onGenerate: (state: PostState) => void;
   isGenerating: boolean;
-  initialState?: PostState | null; // New Prop for Trends/Evidence
+  initialState?: PostState | null;
 }
 
 const PostWizard: React.FC<PostWizardProps> = ({ onGenerate, isGenerating, initialState }) => {
@@ -36,55 +20,64 @@ const PostWizard: React.FC<PostWizardProps> = ({ onGenerate, isGenerating, initi
   const [tone, setTone] = useState<Tone>(Tone.PROFESSIONAL);
   const [format, setFormat] = useState<PostFormat>(PostFormat.FEED);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{topic?: boolean}>({});
-  
-  // Detect if we are in "Trend Mode" (Viral Strategy)
-  const isTrendMode = !!initialState?.customInstructions && !initialState.evidence;
-  // Detect if Evidence Mode
-  const isEvidenceMode = !!initialState?.evidence;
+  const [errors, setErrors] = useState<{topic?: string}>({});
+  const [loadingStage, setLoadingStage] = useState(0); 
 
+  const isTrendMode = !!initialState?.customInstructions && !initialState.evidence;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Pre-fill State from Trends/Evidence (Run once when initialState changes)
   useEffect(() => {
     if (initialState) {
         setCategory(initialState.category);
         setTopic(initialState.topic);
         setTone(initialState.tone);
         setFormat(initialState.format);
-        // If it's a trend or evidence, jump steps
         if (initialState.customInstructions || initialState.evidence) {
             setStep(3);
         }
-    } else {
-        // Reset defaults if opened fresh
-        setStep(1);
-        setCategory(PostCategory.PATHOLOGY);
-        setTopic('');
-        setTone(Tone.PROFESSIONAL);
-        setFormat(PostFormat.FEED);
-        setUploadedImage(null);
     }
   }, [initialState]);
 
+  useEffect(() => {
+      if (isGenerating) {
+          setLoadingStage(1);
+          const t1 = setTimeout(() => setLoadingStage(2), 2000);
+          const t2 = setTimeout(() => setLoadingStage(3), 4000);
+          return () => { clearTimeout(t1); clearTimeout(t2); };
+      } else {
+          setLoadingStage(0);
+      }
+  }, [isGenerating]);
+
+  const validateStep2 = () => {
+      if (!topic.trim()) {
+          setErrors({ topic: 'Por favor, digite um tema para o post.' });
+          if (navigator.vibrate) navigator.vibrate(200);
+          return false;
+      }
+      if (topic.length < 3) {
+          setErrors({ topic: 'O tema deve ter pelo menos 3 caracteres.' });
+          return false;
+      }
+      setErrors({});
+      return true;
+  };
+
   const handleNext = () => {
-    if (step === 2 && !topic.trim()) {
-        setErrors({ topic: true });
-        return;
-    }
+    if (step === 2 && !validateStep2()) return;
     setStep(prev => prev + 1);
   };
 
   const handleBack = () => setStep(prev => prev - 1);
 
   const handleSubmit = () => {
-    // If trend mode, preserve instructions
+    if (!topic.trim()) {
+        setStep(2);
+        setErrors({ topic: 'O tema é obrigatório.' });
+        return;
+    }
     const customInstructions = initialState?.customInstructions || '';
-    // Pass evidence if exists
-    onGenerate({ 
-        category, topic, tone, format, customInstructions, uploadedImage,
-        evidence: initialState?.evidence 
-    });
+    onGenerate({ category, topic, tone, format, customInstructions, uploadedImage, evidence: initialState?.evidence });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,307 +90,213 @@ const PostWizard: React.FC<PostWizardProps> = ({ onGenerate, isGenerating, initi
   };
 
   const categories = [
-    { id: PostCategory.PATHOLOGY, icon: <HeartPulse className="w-5 h-5" />, label: "Doenças" },
-    { id: PostCategory.SURGERY, icon: <BriefcaseMedical className="w-5 h-5" />, label: "Cirurgias" },
-    { id: PostCategory.SPORTS, icon: <Activity className="w-5 h-5" />, label: "Esporte" },
-    { id: PostCategory.REHAB, icon: <User className="w-5 h-5" />, label: "Reabilitação" },
-    { id: PostCategory.LIFESTYLE, icon: <ShieldCheck className="w-5 h-5" />, label: "Vida" },
-    { id: PostCategory.MYTHS, icon: <HelpCircle className="w-5 h-5" />, label: "Mitos" },
+    { id: PostCategory.PATHOLOGY, icon: HeartPulse, label: "Doenças", color: "text-rose-500", bg: "bg-rose-50" },
+    { id: PostCategory.SURGERY, icon: BriefcaseMedical, label: "Cirurgias", color: "text-blue-500", bg: "bg-blue-50" },
+    { id: PostCategory.SPORTS, icon: Activity, label: "Esporte", color: "text-emerald-500", bg: "bg-emerald-50" },
+    { id: PostCategory.REHAB, icon: User, label: "Reabilitação", color: "text-purple-500", bg: "bg-purple-50" },
+    { id: PostCategory.LIFESTYLE, icon: ShieldCheck, label: "Vida", color: "text-orange-500", bg: "bg-orange-50" },
+    { id: PostCategory.MYTHS, icon: HelpCircle, label: "Mitos", color: "text-cyan-500", bg: "bg-cyan-50" },
   ];
 
-  // Progress Bar
   const progress = (step / 3) * 100;
 
   return (
     <div className="flex flex-col h-full animate-fadeIn w-full">
-        
-        {/* Progress Header */}
-        <div className="mb-8 px-1">
-            <div className="flex justify-between text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+        <div className="mb-6 px-2">
+            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
                 <span>Passo {step} de 3</span>
-                <span>{step === 1 ? 'Formato' : step === 2 ? 'Conteúdo' : 'Personalização'}</span>
+                <span>{step === 1 ? 'Formato' : step === 2 ? 'Conteúdo' : 'Estilo'}</span>
             </div>
             <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-primary transition-all duration-500 ease-out relative" style={{ width: `${progress}%` }}>
-                    <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-r from-transparent to-white/30"></div>
-                </div>
+                <div className="h-full bg-slate-900 transition-all duration-500 ease-out relative" style={{ width: `${progress}%` }}></div>
             </div>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto no-scrollbar px-1 pb-4">
+        <div className="flex-1 overflow-y-auto no-scrollbar px-2 pb-4">
             
-            {/* STEP 1: FORMAT & MEDIA */}
             {step === 1 && (
-                <div className="space-y-8 animate-slideUp">
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Como será esse post?</h2>
+                <div className="space-y-6 animate-slideUp">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Qual o formato?</h2>
                     
-                    <div className="grid grid-cols-2 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
                             onClick={() => setFormat(PostFormat.FEED)}
-                            className={`relative p-6 rounded-3xl border-2 transition-all duration-300 text-left group active:scale-[0.98]
+                            className={`relative p-6 rounded-[1.5rem] border-2 transition-all duration-300 text-left group active:scale-[0.98]
                             ${format === PostFormat.FEED 
-                                ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10 ring-1 ring-primary/20' 
-                                : 'border-slate-100 bg-white hover:border-slate-200 hover:shadow-md'}`}
+                                ? 'border-slate-900 bg-slate-900 text-white shadow-xl' 
+                                : 'border-slate-100 bg-white hover:border-slate-200'}`}
                         >
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${format === PostFormat.FEED ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-50 text-slate-400'}`}>
-                                <LayoutGrid className="w-6 h-6" />
+                            <div className="flex justify-between items-start mb-4">
+                                <LayoutGrid className={`w-8 h-8 ${format === PostFormat.FEED ? 'text-white' : 'text-slate-300'}`} />
+                                {format === PostFormat.FEED && <Check className="w-5 h-5 text-white bg-white/20 rounded-full p-1" />}
                             </div>
-                            <span className="block font-bold text-slate-900 text-lg">Feed</span>
-                            <span className="text-xs text-slate-500 mt-2 block font-medium leading-relaxed">Quadrado (1:1). Ideal para educação e detalhes.</span>
-                            {format === PostFormat.FEED && <div className="absolute top-5 right-5 text-primary bg-white rounded-full p-1 shadow-sm"><Check className="w-4 h-4" /></div>}
+                            <span className="block font-bold text-lg">Feed (Quadrado)</span>
+                            <span className={`text-xs mt-1 block ${format === PostFormat.FEED ? 'text-slate-400' : 'text-slate-500'}`}>Ideal para educação profunda.</span>
                         </button>
 
                         <button
                             onClick={() => setFormat(PostFormat.STORY)}
-                            className={`relative p-6 rounded-3xl border-2 transition-all duration-300 text-left group active:scale-[0.98]
+                            className={`relative p-6 rounded-[1.5rem] border-2 transition-all duration-300 text-left group active:scale-[0.98]
                             ${format === PostFormat.STORY 
-                                ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10 ring-1 ring-primary/20' 
-                                : 'border-slate-100 bg-white hover:border-slate-200 hover:shadow-md'}`}
+                                ? 'border-slate-900 bg-slate-900 text-white shadow-xl' 
+                                : 'border-slate-100 bg-white hover:border-slate-200'}`}
                         >
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${format === PostFormat.STORY ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-slate-50 text-slate-400'}`}>
-                                <Smartphone className="w-6 h-6" />
+                            <div className="flex justify-between items-start mb-4">
+                                <Smartphone className={`w-8 h-8 ${format === PostFormat.STORY ? 'text-white' : 'text-slate-300'}`} />
+                                {format === PostFormat.STORY && <Check className="w-5 h-5 text-white bg-white/20 rounded-full p-1" />}
                             </div>
-                            <span className="block font-bold text-slate-900 text-lg">Story</span>
-                            <span className="text-xs text-slate-500 mt-2 block font-medium leading-relaxed">Vertical (9:16). Rápido, direto e interativo.</span>
-                             {format === PostFormat.STORY && <div className="absolute top-5 right-5 text-primary bg-white rounded-full p-1 shadow-sm"><Check className="w-4 h-4" /></div>}
+                            <span className="block font-bold text-lg">Story (Vertical)</span>
+                            <span className={`text-xs mt-1 block ${format === PostFormat.STORY ? 'text-slate-400' : 'text-slate-500'}`}>Rápido, viral e interativo.</span>
                         </button>
                     </div>
 
                     <div className="pt-6 border-t border-slate-100">
-                        <label className="block text-sm font-bold text-slate-700 mb-4 uppercase tracking-wide">Imagem de Referência (Opcional)</label>
+                        <label className="block text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest">Imagem de Referência (Opcional)</label>
                         <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
                         
                         {!uploadedImage ? (
                             <div 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="w-full h-32 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary hover:bg-primary/5 transition-all text-slate-400 hover:text-primary group bg-white hover:shadow-sm active:scale-[0.99]"
+                                className="w-full h-24 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-all text-slate-400 active:scale-[0.98]"
                             >
-                                <div className="p-3 bg-slate-50 rounded-2xl group-hover:bg-white transition-colors shadow-sm">
-                                    <ImageIcon className="w-6 h-6" />
-                                </div>
-                                <span className="text-sm font-bold">Carregar Raio-X ou Foto</span>
+                                <ImageIcon className="w-6 h-6 opacity-50" />
+                                <span className="text-xs font-bold">Toque para carregar foto</span>
                             </div>
                         ) : (
-                            <div className="relative w-full h-48 rounded-3xl overflow-hidden border border-slate-200 shadow-lg group">
+                            <div className="relative w-full h-48 rounded-3xl overflow-hidden border border-slate-200 shadow-lg">
                                 <img src={uploadedImage} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                     <button onClick={() => setUploadedImage(null)} className="bg-white text-red-500 px-4 py-2 rounded-xl text-xs font-bold shadow-xl hover:scale-105 transition-transform">Remover Imagem</button>
-                                </div>
+                                <button onClick={() => setUploadedImage(null)} className="absolute top-2 right-2 bg-white/90 text-red-500 px-3 py-1.5 rounded-full text-xs font-bold shadow-md backdrop-blur-sm">Remover</button>
                             </div>
                         )}
                     </div>
                 </div>
             )}
 
-            {/* STEP 2: CONTENT */}
             {step === 2 && (
-                <div className="space-y-8 animate-slideUp">
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Sobre o que vamos falar?</h2>
+                <div className="space-y-6 animate-slideUp">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">O que vamos abordar?</h2>
                     
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                         {categories.map((cat) => (
                             <button 
                                 key={cat.id}
                                 onClick={() => setCategory(cat.id)}
-                                className={`p-4 rounded-2xl border text-left flex items-center gap-3 transition-all active:scale-[0.98]
+                                className={`p-4 rounded-2xl border text-left flex flex-col items-center justify-center gap-3 transition-all active:scale-[0.96] min-h-[110px] shadow-sm
                                 ${category === cat.id 
-                                    ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20' 
-                                    : 'border-slate-100 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm'}`}
+                                    ? 'border-slate-900 bg-slate-900 text-white shadow-xl' 
+                                    : 'border-slate-100 bg-white text-slate-600'}`}
                             >
-                                <div className={`p-2 rounded-lg ${category === cat.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'}`}>{cat.icon}</div>
-                                <span className="text-sm font-bold">{cat.label}</span>
+                                <div className={`p-2 rounded-full ${category === cat.id ? 'bg-white/10 text-white' : `${cat.bg} ${cat.color}`}`}>
+                                    <cat.icon className="w-6 h-6" />
+                                </div>
+                                <span className="text-xs font-bold text-center leading-tight">{cat.label}</span>
                             </button>
                         ))}
                     </div>
 
-                    <div className="relative pt-4">
-                        <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wide">Tema Principal</label>
-                        <div className="relative group">
-                            <Search className={`absolute left-5 top-4 w-5 h-5 transition-colors ${errors.topic ? 'text-red-400' : 'text-slate-400 group-focus-within:text-primary'}`} />
+                    <div className="relative pt-2">
+                        <label className="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-widest">Tema Principal</label>
+                        <div className={`relative transition-all ${errors.topic ? 'animate-bounce' : ''}`}>
                             <input 
                                 type="text" 
                                 value={topic}
-                                onChange={(e) => { setTopic(e.target.value); setErrors({topic: false}); }}
-                                autoFocus
-                                className={`w-full pl-12 pr-5 py-4 bg-white border-2 rounded-2xl outline-none focus:ring-4 transition-all font-medium text-lg
+                                onChange={(e) => { setTopic(e.target.value); if (errors.topic) setErrors({}); }}
+                                onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+                                className={`w-full pl-5 pr-12 py-5 bg-white border-2 rounded-[1.25rem] outline-none text-lg font-bold shadow-sm transition-all placeholder:font-normal
                                 ${errors.topic 
-                                    ? 'border-red-100 focus:border-red-500 focus:ring-red-100 placeholder:text-red-300' 
-                                    : 'border-slate-100 focus:border-primary focus:ring-primary/10 placeholder:text-slate-300 hover:border-slate-200'}`} 
-                                placeholder="Ex: Dor no menisco ao agachar..."
+                                    ? 'border-red-400 focus:border-red-500 ring-4 ring-red-50' 
+                                    : 'border-slate-200 focus:border-slate-900 focus:ring-4 focus:ring-slate-100'}`} 
+                                placeholder="Ex: Dor no menisco..."
                             />
-                        </div>
-                        {errors.topic && <p className="text-red-500 text-xs font-bold mt-2 ml-2 flex items-center gap-1 animate-slideUp"><AlertCircle className="w-3 h-3"/> Digite um tema para continuar</p>}
-                    </div>
-                </div>
-            )}
-
-            {/* STEP 3: TONE & CONFIRMATION (Enhanced for Trends/Evidence) */}
-            {step === 3 && (
-                <div className="space-y-8 animate-slideUp">
-                    
-                    {/* Trend Strategy Card */}
-                    {isTrendMode && (
-                        <div className="relative overflow-hidden rounded-[1.5rem] bg-slate-900 text-white shadow-2xl shadow-slate-900/20 mb-8 border border-slate-800">
-                             {/* Abstract Background Effects */}
-                             <div className="absolute top-0 right-0 w-64 h-64 bg-primary rounded-full blur-[80px] opacity-20 animate-pulse"></div>
-                             <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-500 rounded-full blur-[60px] opacity-10"></div>
-                             
-                             <div className="relative p-8">
-                                 <div className="flex items-center justify-between mb-6">
-                                     <span className="bg-orange-500/20 text-orange-400 border border-orange-500/30 text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-md shadow-lg shadow-orange-900/20">
-                                         <Flame className="w-3.5 h-3.5 fill-orange-400" /> ESTRATÉGIA VIRAL
-                                     </span>
-                                 </div>
-                                 
-                                 <h3 className="text-2xl font-black leading-tight mb-3 text-white tracking-tight">"{topic}"</h3>
-                                 <p className="text-sm text-slate-300 leading-relaxed mb-6 border-l-2 border-primary pl-4">
-                                     A IA detectou alta demanda. O post será otimizado para <span className="text-white font-bold">retenção</span> e <span className="text-white font-bold">compartilhamento</span>.
-                                 </p>
-                                 
-                                 <div className="grid grid-cols-2 gap-4">
-                                     <div className="bg-white/5 rounded-xl p-4 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
-                                         <Zap className="w-5 h-5 text-yellow-400" />
-                                         <span className="text-xs font-bold text-slate-200">Headline Clickbait</span>
-                                     </div>
-                                     <div className="bg-white/5 rounded-xl p-4 border border-white/10 flex items-center gap-3 backdrop-blur-sm">
-                                         <div className="w-5 h-5 rounded-full border-2 border-green-400 flex items-center justify-center">
-                                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                         </div>
-                                         <span className="text-xs font-bold text-slate-200">Alta Relevância</span>
-                                     </div>
-                                 </div>
-                             </div>
-                        </div>
-                    )}
-
-                    {/* Evidence Strategy Card */}
-                    {isEvidenceMode && (
-                        <div className="relative overflow-hidden rounded-[1.5rem] bg-blue-900 text-white shadow-2xl shadow-blue-900/20 mb-8 border border-blue-800">
-                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-[80px] opacity-20"></div>
-                             
-                             <div className="relative p-8">
-                                 <div className="flex items-center justify-between mb-6">
-                                     <span className="bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 backdrop-blur-md">
-                                         <FlaskConical className="w-3.5 h-3.5 fill-blue-400" /> BASEADO EM EVIDÊNCIA
-                                     </span>
-                                 </div>
-                                 
-                                 <h3 className="text-lg font-bold leading-tight mb-2 text-white tracking-tight line-clamp-2">
-                                     {initialState?.evidence?.title}
-                                 </h3>
-                                 <p className="text-[10px] text-blue-200 font-mono mb-6 bg-blue-950/50 p-2 rounded border border-blue-800/50 inline-block">
-                                     Fonte: {initialState?.evidence?.source}
-                                 </p>
-                                 
-                                 <div className="bg-white/10 p-4 rounded-xl border border-white/10 text-xs text-slate-200 italic">
-                                     "O conteúdo será gerado citando este artigo científico para aumentar sua autoridade."
-                                 </div>
-                             </div>
-                        </div>
-                    )}
-
-                    <div>
-                        <h2 className="text-2xl font-black text-slate-900 mb-6 tracking-tight">
-                            {isTrendMode || isEvidenceMode ? 'Ajuste Fino da IA' : 'Qual a "vibe" do post?'}
-                        </h2>
-                        
-                        <div className="space-y-3">
-                            {Object.values(Tone).slice(0, 5).map((t) => (
-                                <button
-                                    key={t}
-                                    onClick={() => setTone(t)}
-                                    className={`w-full p-5 rounded-2xl border flex items-center justify-between transition-all group active:scale-[0.99]
-                                    ${tone === t 
-                                        ? 'border-primary bg-primary/5 text-primary-900 shadow-lg shadow-primary/10 ring-1 ring-primary/20' 
-                                        : 'border-slate-100 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300'}`}
-                                >
-                                    <div className="flex flex-col items-start">
-                                        <span className="font-bold text-sm">{t.split('/')[0]}</span>
-                                        <span className="text-xs opacity-70 font-medium mt-0.5">{t.split('/')[1]}</span>
-                                    </div>
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all ${tone === t ? 'bg-primary border-primary text-white' : 'border-slate-200 bg-slate-50'}`}>
-                                        {tone === t && <Check className="w-3.5 h-3.5" />}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {(isTrendMode || isEvidenceMode) && (
-                        <div className="pt-6 border-t border-slate-100 mt-6">
-                            <label className="block text-sm font-bold text-slate-700 mb-4 uppercase tracking-wide">Adicionar Foto Pessoal (Opcional)</label>
-                            <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
-                            
-                            {!uploadedImage ? (
-                                <div 
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="w-full h-20 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center gap-3 cursor-pointer hover:border-primary hover:bg-primary/5 transition-all text-slate-500 hover:text-primary group bg-white active:scale-[0.99]"
-                                >
-                                    <div className="p-2 bg-slate-100 rounded-lg group-hover:bg-white">
-                                        <ImageIcon className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-xs font-bold">Usar foto ao invés de IA</span>
+                            {errors.topic ? (
+                                <div className="absolute right-4 top-5 text-red-500">
+                                    <AlertCircle className="w-6 h-6" />
                                 </div>
                             ) : (
-                                <div className="relative w-full h-40 rounded-2xl overflow-hidden border border-slate-200 shadow-md group">
-                                    <img src={uploadedImage} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                         <button onClick={() => setUploadedImage(null)} className="bg-white text-red-500 px-4 py-2 rounded-xl text-xs font-bold shadow-lg hover:scale-105 transition-transform">Remover</button>
-                                    </div>
+                                <div className="absolute right-4 top-5 text-slate-300">
+                                    <Search className="w-6 h-6" />
                                 </div>
                             )}
                         </div>
-                    )}
+                        {errors.topic && <p className="text-red-500 text-xs font-bold mt-2 ml-2">{errors.topic}</p>}
+                    </div>
                 </div>
             )}
 
+            {step === 3 && (
+                <div className="space-y-6 animate-slideUp">
+                    {/* Strategy Cards */}
+                    {isTrendMode && (
+                        <div className="bg-orange-50 p-5 rounded-[1.5rem] border border-orange-100 flex items-start gap-4">
+                            <div className="p-2 bg-orange-100 rounded-full text-orange-600">
+                                <Flame className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-orange-900 text-sm">Modo Viral Ativado</h3>
+                                <p className="text-xs text-orange-700 mt-1 leading-relaxed">Foco total em retenção e headline chamativa baseada nas trends.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Tom de Voz</h2>
+                    <div className="space-y-3">
+                        {Object.values(Tone).slice(0, 5).map((t) => (
+                            <button
+                                key={t}
+                                onClick={() => setTone(t)}
+                                className={`w-full p-5 rounded-2xl border flex items-center justify-between transition-all active:scale-[0.98]
+                                ${tone === t 
+                                    ? 'border-slate-900 bg-slate-50 text-slate-900 shadow-md ring-1 ring-slate-200' 
+                                    : 'border-slate-100 bg-white text-slate-600'}`}
+                            >
+                                <span className="font-bold text-sm">{t}</span>
+                                {tone === t && <Check className="w-5 h-5 text-slate-900" />}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
 
-        {/* Footer Navigation / Loading State */}
-        <div className="pt-6 mt-2 border-t border-slate-100 flex items-center gap-4">
+        <div className="pt-4 border-t border-slate-200/60 flex items-center gap-4 bg-white/50 backdrop-blur-md md:bg-transparent -mx-4 px-6 pb-6">
             {isGenerating ? (
-                <div className="w-full flex flex-col items-center justify-center py-6 animate-fadeIn">
-                    <div className="relative mb-4">
-                       <div className="absolute inset-0 bg-orange-400 rounded-full blur-2xl opacity-20 animate-pulse"></div>
-                       <div className="relative bg-white p-5 rounded-full shadow-xl border border-orange-100">
-                           <Wand2 className="w-8 h-8 text-primary animate-spin" style={{ animationDuration: '3s' }} />
-                       </div>
+                <div className="w-full py-2 animate-fadeIn">
+                    <div className="flex justify-between mb-2 px-1">
+                        <span className={`text-[10px] font-bold uppercase transition-colors ${loadingStage >= 1 ? 'text-slate-900' : 'text-slate-300'}`}>1. Copy</span>
+                        <span className={`text-[10px] font-bold uppercase transition-colors ${loadingStage >= 2 ? 'text-slate-900' : 'text-slate-300'}`}>2. Audit</span>
+                        <span className={`text-[10px] font-bold uppercase transition-colors ${loadingStage >= 3 ? 'text-slate-900' : 'text-slate-300'}`}>3. Image</span>
                     </div>
-                    <p className="text-sm font-bold text-slate-800">Criando Post Incrível...</p>
-                    <p className="text-xs text-slate-400 animate-pulse font-medium">Gerando imagem e legenda criativa</p>
+                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative">
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-200 to-transparent skeleton-bg w-full"></div>
+                        <div className="h-full bg-slate-900 transition-all duration-[2000ms] ease-linear" style={{ width: `${loadingStage * 33}%` }}></div>
+                    </div>
+                    <p className="text-center text-xs text-slate-500 font-bold mt-3 animate-pulse">
+                        {loadingStage === 1 && "Escrevendo legenda..."}
+                        {loadingStage === 2 && "Verificando regras do CFM..."}
+                        {loadingStage === 3 && "Gerando imagem exclusiva..."}
+                    </p>
                 </div>
             ) : (
                 <>
                     {step > 1 && (
-                        <button 
-                            onClick={handleBack}
-                            className="px-6 py-4 rounded-2xl font-bold text-slate-500 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200 active:scale-95"
-                        >
-                            <ArrowLeft className="w-5 h-5" />
+                        <button onClick={handleBack} className="p-4 rounded-2xl bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 active:scale-95 shadow-sm">
+                            <ArrowLeft className="w-6 h-6" />
                         </button>
                     )}
                     
                     {step < 3 ? (
-                        <button 
-                            onClick={handleNext}
-                            className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] group"
-                        >
-                            Próximo <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        <button onClick={handleNext} className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 flex items-center justify-center gap-3 shadow-xl shadow-slate-900/20 active:scale-[0.98]">
+                            Próximo <ArrowRight className="w-5 h-5" />
                         </button>
                     ) : (
-                        <button 
-                            onClick={handleSubmit}
-                            className={`flex-1 bg-gradient-to-r ${isTrendMode ? 'from-orange-500 to-red-600' : isEvidenceMode ? 'from-blue-600 to-indigo-600' : 'from-primary to-blue-600'} text-white py-4 rounded-2xl font-bold shadow-xl shadow-primary/20 flex items-center justify-center gap-3 transform active:scale-[0.98] transition-all group hover:brightness-110`}
-                        >
-                            <Sparkles className="w-5 h-5 text-white/90 group-hover:rotate-12 transition-transform" />
-                            {isTrendMode ? 'Gerar Post Viral' : isEvidenceMode ? 'Gerar Post Científico' : 'Gerar Post'}
+                        <button onClick={handleSubmit} className={`flex-1 bg-gradient-to-r ${isTrendMode ? 'from-orange-500 to-red-600' : 'from-blue-600 to-indigo-600'} text-white py-4 rounded-2xl font-bold shadow-xl flex items-center justify-center gap-3 active:scale-[0.98]`}>
+                            <Sparkles className="w-5 h-5" />
+                            {isTrendMode ? 'Gerar Post Viral' : 'Gerar Post'}
                         </button>
                     )}
                 </>
             )}
         </div>
-
     </div>
   );
 };

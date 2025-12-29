@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { GeneratedResult, PostFormat } from '../types';
-import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Check, Edit2, Wand2, Battery, Wifi, Signal, Instagram, Loader2, Share2 } from 'lucide-react';
-import { refinePostCaption } from '../services/geminiService';
+import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Check, Edit2, Wand2, Battery, Wifi, Signal, Instagram, Loader2, Share2, RefreshCw, Video } from 'lucide-react';
+import { refinePostCaption, remixContent } from '../services/geminiService';
 import { publishToInstagram, getStoredInstagramConfig } from '../services/instagramService';
 import InstagramConnect from './InstagramConnect';
 import CFMComplianceGuide from './CFMComplianceGuide';
@@ -22,15 +22,13 @@ const PostPreview: React.FC<PostPreviewProps> = ({
 }) => {
   const { content, imageUrl } = result;
   
-  // Editable State
   const [editableCaption, setEditableCaption] = useState(content?.caption || '');
   const [isEditing, setIsEditing] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
-
-  // Publishing State
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [showConnectModal, setShowConnectModal] = useState(false);
+  const [isRemixing, setIsRemixing] = useState(false);
 
   useEffect(() => {
     if (content?.caption) setEditableCaption(content.caption);
@@ -50,26 +48,19 @@ const PostPreview: React.FC<PostPreviewProps> = ({
 
   const handlePublishClick = async () => {
     const config = getStoredInstagramConfig();
-    
     if (!config.isConnected) {
         setShowConnectModal(true);
         return;
     }
-
     if (!imageUrl) {
         alert("Imagem ainda não gerada.");
         return;
     }
-
-    // Prepare Hashtags
     const finalCaption = `${editableCaption}\n\n${content?.hashtags?.join(' ') || ''}`;
-
     setIsPublishing(true);
     setPublishStatus('idle');
-
     try {
         const result = await publishToInstagram(config, imageUrl, finalCaption);
-        
         if (result.success) {
             setPublishStatus('success');
             setTimeout(() => setPublishStatus('idle'), 5000);
@@ -85,13 +76,21 @@ const PostPreview: React.FC<PostPreviewProps> = ({
     }
   };
 
-  // Determine Aspect Ratio based on content format hint (approximate)
-  const isStory = imageUrl?.includes('9:16') || result.content?.imagePromptDescription?.includes('Vertical');
+  const handleRemix = async (target: 'VIDEO_SCRIPT' | 'ARTICLE') => {
+      setIsRemixing(true);
+      try {
+          const remixed = await remixContent(editableCaption, target);
+          alert("Conteúdo remixado gerado! (Funcionalidade de visualização em breve)");
+      } catch (e) {
+          alert("Erro ao remixar.");
+      } finally {
+          setIsRemixing(false);
+      }
+  };
 
   return (
     <div className="animate-scaleIn w-full flex flex-col lg:flex-row gap-8 items-start justify-center pt-2 pb-24 lg:pb-8 relative px-4 lg:px-0">
         
-        {/* Instagram Connect Modal */}
         {showConnectModal && (
             <InstagramConnect 
                 onConnected={() => { setShowConnectModal(false); handlePublishClick(); }} 
@@ -100,15 +99,14 @@ const PostPreview: React.FC<PostPreviewProps> = ({
         )}
 
         {/* LEFT COLUMN: PHONE MOCKUP */}
-        <div className="flex-shrink-0 mx-auto lg:mx-0 sticky top-4">
-            <div className="bg-white rounded-[2rem] shadow-[0_0_0_8px_#1e293b,0_15px_40px_-10px_rgba(0,0,0,0.4)] overflow-hidden relative aspect-[9/19.5] w-full max-w-[320px] max-h-[calc(100vh-160px)] border-[3px] border-slate-800">
+        <div className="flex-shrink-0 mx-auto lg:mx-0 w-full max-w-[320px] flex justify-center">
+            {/* Scaled wrapper for small screens */}
+            <div className="relative w-full aspect-[9/19.5] max-h-[85vh] bg-white rounded-[2rem] shadow-[0_0_0_8px_#1e293b,0_15px_40px_-10px_rgba(0,0,0,0.4)] overflow-hidden border-[3px] border-slate-800 transform-gpu">
                 
-                {/* Dynamic Island Area */}
                 <div className="absolute top-0 left-0 right-0 h-7 z-30 flex justify-center items-end pb-1">
-                    <div className="w-24 h-6 bg-black rounded-b-xl"></div>
+                    <div className="w-20 h-5 bg-black rounded-b-xl"></div>
                 </div>
 
-                {/* Status Bar */}
                 <div className="h-10 bg-white flex items-center justify-between px-5 pt-2 select-none text-slate-900 z-20 relative">
                     <span className="text-[11px] font-bold tracking-wide pl-1">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                     <div className="flex gap-1 items-center pr-1">
@@ -118,7 +116,6 @@ const PostPreview: React.FC<PostPreviewProps> = ({
                     </div>
                 </div>
 
-                {/* Instagram Header */}
                 <div className="h-10 flex items-center justify-between px-3 border-b border-slate-50 bg-white/95 backdrop-blur z-20 relative sticky top-0">
                     <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 p-[1.5px]">
@@ -134,29 +131,40 @@ const PostPreview: React.FC<PostPreviewProps> = ({
                     <MoreHorizontal className="w-4 h-4 text-slate-900" />
                 </div>
 
-                {/* Content Container (Scrollable) */}
                 <div className="h-[calc(100%-5rem)] overflow-y-auto no-scrollbar bg-white relative">
-                    
-                    {/* Image Area */}
-                    <div className="relative w-full bg-slate-100">
+                    <div className="relative w-full bg-slate-100 group/image">
                         <div className={`w-full relative aspect-square`}>
-                            {imageUrl ? (
-                                <img src={imageUrl} className="w-full h-full object-cover" />
+                            {isRegenerating && !imageUrl ? (
+                                <div className="absolute inset-0 z-20 bg-slate-50 animate-pulse flex items-center justify-center">
+                                    <Loader2 className="w-8 h-8 text-slate-300 animate-spin" />
+                                </div>
+                            ) : imageUrl ? (
+                                <>
+                                    <img src={imageUrl} className={`w-full h-full object-cover transition-opacity duration-500 ${isRegenerating ? 'opacity-50 blur-sm' : 'opacity-100'}`} />
+                                    {isRegenerating && (
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <Loader2 className="w-8 h-8 text-white animate-spin drop-shadow-md" />
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button 
+                                            onClick={onRegenerateImage}
+                                            disabled={isRegenerating}
+                                            className="bg-white/90 text-slate-900 px-4 py-2 rounded-full text-xs font-bold shadow-lg transform translate-y-2 group-hover/image:translate-y-0 transition-all active:scale-95 flex items-center gap-2 hover:bg-white"
+                                        >
+                                            <Wand2 className="w-3 h-3" /> Nova Imagem
+                                        </button>
+                                    </div>
+                                </>
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-2">
                                     <div className="w-8 h-8 border-2 border-slate-300 rounded-full animate-spin border-t-transparent"></div>
                                     <span className="text-[10px] font-medium">Gerando Imagem...</span>
                                 </div>
                             )}
-                            {result.isCustomImage && (
-                                <div className="absolute top-2 right-2 bg-black/60 backdrop-blur text-white px-2 py-0.5 rounded text-[9px] font-bold border border-white/20">
-                                    Foto do Paciente
-                                </div>
-                            )}
                         </div>
                     </div>
 
-                    {/* Action Bar */}
                     <div className="flex items-center justify-between px-3 py-2">
                         <div className="flex gap-3 text-slate-900">
                             <Heart className="w-5 h-5 hover:text-red-500 hover:fill-red-500 transition-all cursor-pointer active:scale-90" />
@@ -166,115 +174,80 @@ const PostPreview: React.FC<PostPreviewProps> = ({
                         <Bookmark className="w-5 h-5 text-slate-900 hover:text-slate-600 cursor-pointer" />
                     </div>
 
-                    {/* Caption Area */}
                     <div className="px-3 pb-20">
                         <p className="text-[11px] font-bold text-slate-900 mb-1">324 curtidas</p>
                         
                         <div className="relative group">
-                            {isEditing ? (
-                                <div className="relative">
+                            {isRegenerating && !editableCaption ? (
+                                <div className="space-y-2 py-2">
+                                    <div className="h-2.5 bg-slate-200 rounded w-3/4 animate-pulse"></div>
+                                    <div className="h-2.5 bg-slate-200 rounded w-full animate-pulse"></div>
+                                    <div className="h-2.5 bg-slate-200 rounded w-5/6 animate-pulse"></div>
+                                </div>
+                            ) : isEditing ? (
+                                <div className="relative animate-fadeIn">
                                     <textarea 
                                         value={editableCaption}
                                         onChange={(e) => setEditableCaption(e.target.value)}
-                                        className="w-full h-48 text-xs leading-relaxed p-2 border border-primary-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-slate-50 font-sans"
+                                        className="w-full h-48 text-xs leading-relaxed p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 font-sans"
                                     />
-                                    <button 
-                                        onClick={() => setIsEditing(false)}
-                                        className="absolute bottom-2 right-2 bg-green-500 text-white p-1 rounded-full shadow-lg hover:bg-green-600 transition-colors"
-                                    >
-                                        <Check className="w-3 h-3" />
-                                    </button>
+                                    <button onClick={() => setIsEditing(false)} className="absolute bottom-2 right-2 bg-green-500 text-white p-1.5 rounded-full shadow-lg hover:bg-green-600 transition-all active:scale-90"><Check className="w-3 h-3" /></button>
                                 </div>
                             ) : (
-                                <div className="text-xs leading-relaxed text-slate-800 font-sans">
+                                <div className={`text-xs leading-relaxed text-slate-800 font-sans transition-opacity ${isRegenerating ? 'opacity-50' : 'opacity-100'}`}>
                                     <span className="font-bold mr-1 text-slate-900">dr.carlos_franciozi</span>
                                     <span className="whitespace-pre-wrap">{editableCaption}</span>
-                                    <button 
-                                        onClick={() => setIsEditing(true)}
-                                        className="ml-1 text-[9px] text-slate-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:text-primary"
-                                    >
-                                        <Edit2 className="w-2.5 h-2.5 inline mr-0.5" /> Editar
-                                    </button>
+                                    <button onClick={() => setIsEditing(true)} className="ml-1 text-[9px] text-slate-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:text-slate-600"><Edit2 className="w-2.5 h-2.5 inline mr-0.5" /> Editar</button>
                                 </div>
                             )}
                         </div>
                         
-                        {/* Hashtags */}
                         {content?.hashtags && !isEditing && (
-                            <p className="text-xs text-blue-900 mt-1 font-medium leading-relaxed">
-                                {content.hashtags.join(' ')}
-                            </p>
+                            <p className="text-xs text-blue-900 mt-1 font-medium leading-relaxed">{content.hashtags.join(' ')}</p>
                         )}
-                        
                         <p className="text-[9px] text-slate-400 uppercase mt-2 mb-4">Há 2 horas</p>
+                        {!isEditing && (
+                            <button onClick={onRegenerateText} disabled={isRegenerating} className="w-full py-2 bg-slate-50 text-slate-500 text-[10px] font-bold rounded-lg hover:bg-slate-100 hover:text-slate-700 transition-colors flex items-center justify-center gap-2 border border-slate-100 active:scale-98">
+                                <Wand2 className="w-3 h-3" /> Regerar Legenda
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* Smart Refine Tools */}
                 {!isEditing && (
                     <div className="absolute bottom-4 left-3 right-3 bg-white/95 backdrop-blur-xl border border-slate-200 shadow-[0_4px_15px_rgba(0,0,0,0.1)] rounded-xl p-1.5 z-30 flex gap-2 overflow-x-auto no-scrollbar">
                         {isRefining ? (
-                            <div className="w-full text-center text-[10px] font-bold text-primary py-1.5 flex items-center justify-center gap-2">
-                                <Wand2 className="w-3 h-3 animate-spin" /> Refinando...
-                            </div>
+                            <div className="w-full text-center text-[10px] font-bold text-slate-600 py-1.5 flex items-center justify-center gap-2"><Wand2 className="w-3 h-3 animate-spin" /> Refinando...</div>
                         ) : (
                             <>
-                                <button onClick={() => handleSmartRefine("Mais curto")} className="flex-shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg text-[9px] font-bold text-slate-700 whitespace-nowrap transition-colors border border-slate-100">
-                                    ✂️ Encurtar
-                                </button>
-                                <button onClick={() => handleSmartRefine("Mais empático")} className="flex-shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg text-[9px] font-bold text-slate-700 whitespace-nowrap transition-colors border border-slate-100">
-                                    ❤️ Empatia
-                                </button>
-                                <button onClick={() => handleSmartRefine("Adicionar emojis")} className="flex-shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg text-[9px] font-bold text-slate-700 whitespace-nowrap transition-colors border border-slate-100">
-                                    😊 Emojis
-                                </button>
-                                <button onClick={() => handleSmartRefine("Linguagem leiga")} className="flex-shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg text-[9px] font-bold text-slate-700 whitespace-nowrap transition-colors border border-slate-100">
-                                    🧠 Simplificar
-                                </button>
+                                <button onClick={() => handleSmartRefine("Mais curto")} className="flex-shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg text-[9px] font-bold text-slate-700 whitespace-nowrap transition-colors border border-slate-100">✂️ Encurtar</button>
+                                <button onClick={() => handleSmartRefine("Mais empático")} className="flex-shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg text-[9px] font-bold text-slate-700 whitespace-nowrap transition-colors border border-slate-100">❤️ Empatia</button>
+                                <button onClick={() => handleSmartRefine("Adicionar emojis")} className="flex-shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg text-[9px] font-bold text-slate-700 whitespace-nowrap transition-colors border border-slate-100">😊 Emojis</button>
                             </>
                         )}
                     </div>
                 )}
-
-                {/* Home Indicator */}
                 <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-28 h-1 bg-black/90 rounded-full z-40"></div>
             </div>
         </div>
 
-        {/* RIGHT COLUMN: ACTIONS & COMPLIANCE */}
-        <div className="w-full max-w-[320px] flex flex-col gap-4">
-            
+        <div className="w-full lg:max-w-[320px] flex flex-col gap-4">
             {/* Publish Actions */}
             <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                <button 
-                    onClick={handlePublishClick}
-                    disabled={isPublishing || isRegenerating || !imageUrl}
-                    className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] mb-3
-                    ${publishStatus === 'success' ? 'bg-green-600 text-white' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90'}
-                    ${(isPublishing || !imageUrl) ? 'opacity-70 cursor-not-allowed' : ''}
-                    `}
-                >
-                    {isPublishing ? (
-                        <><Loader2 className="w-5 h-5 animate-spin" /> Publicando...</>
-                    ) : publishStatus === 'success' ? (
-                        <><Check className="w-5 h-5" /> Postado!</>
-                    ) : (
-                        <><Instagram className="w-5 h-5" /> Publicar no Instagram</>
-                    )}
+                <button onClick={handlePublishClick} disabled={isPublishing || isRegenerating || !imageUrl} className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.98] mb-3 ${publishStatus === 'success' ? 'bg-green-600 text-white shadow-green-500/30' : 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:opacity-90 shadow-purple-500/20'} ${(isPublishing || !imageUrl) ? 'opacity-70 cursor-not-allowed' : ''}`}>
+                    {isPublishing ? <><Loader2 className="w-5 h-5 animate-spin" /> Publicando...</> : publishStatus === 'success' ? <><Check className="w-5 h-5" /> Postado!</> : <><Instagram className="w-5 h-5" /> Publicar no Instagram</>}
                 </button>
-
-                <button 
-                    onClick={() => {}} // Placeholder for share intent
-                    className="w-full py-3 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
-                >
-                    <Share2 className="w-4 h-4" /> Agendar / Outros
-                </button>
+                <div className="flex gap-2">
+                    <button onClick={() => handleRemix('VIDEO_SCRIPT')} disabled={isRemixing} className="flex-1 py-3 bg-slate-900 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1 hover:bg-slate-800 transition-all">
+                        {isRemixing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Video className="w-3 h-3" />} Virar Vídeo
+                    </button>
+                    <button onClick={() => handleRemix('ARTICLE')} disabled={isRemixing} className="flex-1 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center justify-center gap-1 hover:bg-slate-50 transition-all">
+                        <RefreshCw className="w-3 h-3" /> Virar Artigo
+                    </button>
+                </div>
             </div>
-
-            {/* Active Compliance Audit */}
             <CFMComplianceGuide contentToAudit={editableCaption} />
         </div>
-
     </div>
   );
 };
