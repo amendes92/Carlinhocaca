@@ -7,7 +7,9 @@ import {
   CheckCircle2,
   Stethoscope,
   BookOpen,
-  Globe
+  Globe,
+  ArrowLeft,
+  BookCopy // Changed from Library to BookCopy for compatibility safety
 } from 'lucide-react';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
@@ -41,9 +43,10 @@ import { GeneratedResult, PostState, GeneratedArticle, ArticleState, Infographic
 type ViewMode = 'dashboard' | 'post' | 'seo' | 'materials' | 'infographic' | 'conversion' | 'history' | 'site' | 'trends' | 'calculator' | 'publications' | 'anatomy' | 'card' | 'scores' | 'frax' | 'prescription' | 'news' | 'journey' | 'video' | 'clinical' | 'marketing_roi';
 
 function App() {
-  // --- PERSISTENT STATE ---
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-      return (localStorage.getItem('medisocial_last_view') as ViewMode) || 'dashboard';
+      // Safety check for local storage
+      const saved = localStorage.getItem('medisocial_last_view');
+      return (saved as ViewMode) || 'dashboard';
   });
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
@@ -81,14 +84,13 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  // EFFECTS
   useEffect(() => {
     localStorage.setItem('medisocial_last_view', viewMode);
   }, [viewMode]);
 
   useEffect(() => {
     localStorage.setItem('medisocial_profile', JSON.stringify(userProfile));
-    updateUserProfile(userProfile); // Sync service singleton
+    updateUserProfile(userProfile); 
   }, [userProfile]);
 
   useEffect(() => {
@@ -116,7 +118,6 @@ function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // HANDLERS
   const handleGeneratePost = async (state: PostState) => {
     setPostLoading(true);
     setError(null);
@@ -132,7 +133,6 @@ function App() {
           imageUrl = state.uploadedImage;
           isCustomImage = true;
       } else {
-          // Parallel execution for speed, but ensuring text is first for prompt context if needed later
           imageUrl = await generatePostImage(content.imagePromptDescription, state.format);
       }
 
@@ -184,7 +184,6 @@ function App() {
     }
   };
 
-  // ... (Keep existing handlers for Article, Infographic, etc.)
   const handleGenerateArticle = async (state: ArticleState) => {
     setArticleLoading(true);
     setError(null);
@@ -220,7 +219,6 @@ function App() {
         setInfographicResult({ data }); 
         showToast('Infográfico estruturado!');
         
-        // Background fetching for images
         generatePostImage(data.heroImagePrompt, PostFormat.FEED)
             .then(url => setInfographicResult(prev => prev ? { ...prev, heroImageUrl: url } : null));
         
@@ -319,12 +317,24 @@ function App() {
   const isGenerating = postLoading || articleLoading || infographicLoading || conversionLoading;
   const isFullPageTool = ['trends', 'calculator', 'materials', 'site', 'publications', 'anatomy', 'card', 'scores', 'frax', 'prescription', 'news', 'journey', 'video', 'clinical', 'marketing_roi'].includes(viewMode);
   const showPreview = hasResult || isGenerating;
+  
+  const isZenMode = viewMode === 'post';
+
+  // Navigation Items - Updated 6 Icons
+  const navItems = [
+    { id: 'dashboard', label: 'Início', icon: LayoutDashboard },
+    { id: 'scores', label: 'Clínica', icon: Stethoscope },
+    { id: 'post', label: 'Post', icon: Briefcase },
+    { id: 'seo', label: 'Artigo', icon: BookOpen },
+    { id: 'materials', label: 'Materiais', icon: BookCopy }, // Updated Icon
+    { id: 'history', label: 'Histórico', icon: HistoryIcon },
+  ];
 
   return (
     <div className="flex h-screen w-full bg-app-bg text-app-text overflow-hidden font-sans relative selection:bg-primary/30 selection:text-primary-900">
       
       {toast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[60] animate-slideUp bg-slate-900/90 backdrop-blur-md text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-3 text-sm font-bold border border-white/10">
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-slideUp bg-slate-900/90 backdrop-blur-md text-white px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-3 text-sm font-bold border border-white/10">
             <div className="bg-green-500 rounded-full p-1"><CheckCircle2 className="w-3.5 h-3.5 text-white" /></div>
             {toast}
         </div>
@@ -332,7 +342,7 @@ function App() {
 
       <div className="flex-1 flex flex-col h-full w-full overflow-hidden relative">
           
-          {viewMode !== 'dashboard' && (
+          {!isZenMode && viewMode !== 'dashboard' && (
             <Header 
                 onBack={() => {
                     if (showPreview && !isFullPageTool) {
@@ -348,6 +358,17 @@ function App() {
                 title={title}
                 subtitle={subtitle}
             />
+          )}
+
+          {isZenMode && (
+             <div className="absolute top-4 left-4 z-50">
+                <button 
+                    onClick={() => setViewMode('dashboard')}
+                    className="p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm text-slate-400 hover:text-slate-700 transition-colors border border-slate-200"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                </button>
+             </div>
           )}
 
           <main className="flex-1 overflow-hidden relative flex flex-col bg-[#F8FAFC]">
@@ -383,7 +404,6 @@ function App() {
                   </div>
               )}
 
-              {/* TOOL VIEWS & PREVIEW Logic (Same as before but wrapped in consistent layout) */}
               {viewMode !== 'dashboard' && viewMode !== 'history' && (
                   <div className="flex flex-col h-full relative">
                        <div className={`flex-1 relative flex flex-col ${showPreview ? 'hidden lg:flex' : 'flex'} ${!isFullPageTool ? 'overflow-hidden' : 'overflow-hidden'}`}>
@@ -396,9 +416,13 @@ function App() {
                                     </div>
                                 )}
 
-                                {viewMode === 'post' && <div className="h-full flex flex-col p-4 pb-32 lg:pb-0"><PostWizard onGenerate={handleGeneratePost} isGenerating={postLoading} initialState={wizardInitialState} /></div>}
+                                {viewMode === 'post' && (
+                                    <div className="h-full flex flex-col p-4 pb-0 lg:pb-0 pt-16 lg:pt-4">
+                                        <PostWizard onGenerate={handleGeneratePost} isGenerating={postLoading} initialState={wizardInitialState} />
+                                    </div>
+                                )}
+                                
                                 {viewMode === 'seo' && <div className="p-4 pb-32 lg:pb-0"><ArticleWizard onGenerate={handleGenerateArticle} isGenerating={articleLoading} initialState={articleWizardState} /></div>}
-                                {/* ... Other tool renderings ... */}
                                 {viewMode === 'infographic' && <div className="p-4 pb-32 lg:pb-0"><InfographicWizard onGenerate={handleGenerateInfographic} isGenerating={infographicLoading} /></div>}
                                 {viewMode === 'conversion' && <div className="p-4 pb-32 lg:pb-0"><ConversionWizard onGenerate={handleGenerateConversion} isGenerating={conversionLoading} /></div>}
                                 {viewMode === 'materials' && <MaterialsLibrary onUseArticle={handleUseEvidence} />}
@@ -420,65 +444,74 @@ function App() {
                        </div>
 
                        <div className={`flex-1 bg-white relative flex flex-col border-t lg:border-t-0 lg:border-l border-slate-200 shadow-[-10px_0_30px_rgba(0,0,0,0.02)] ${showPreview ? 'flex h-full' : 'hidden lg:flex'} ${isFullPageTool ? '!hidden' : ''}`}>
-                            <div className="flex-1 overflow-y-auto scroll-smooth no-scrollbar pb-32 lg:pb-0 relative">
+                            <div className="flex-1 overflow-y-auto scroll-smooth no-scrollbar pb-0 relative">
                                 {isGenerating && (
-                                    <div className="h-full flex flex-col items-center justify-center p-8 animate-fadeIn bg-white/80 backdrop-blur-xl absolute inset-0 z-50">
-                                        <div className="relative mb-8">
-                                            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse"></div>
-                                            <div className="relative w-24 h-24 bg-white rounded-3xl shadow-2xl flex items-center justify-center border border-slate-100">
-                                                <div className="w-12 h-12 border-4 border-slate-100 rounded-full border-t-primary animate-spin"></div>
+                                    <div className="h-full flex flex-col items-center justify-center p-8 animate-fadeIn bg-white/90 backdrop-blur-xl absolute inset-0 z-50">
+                                        <div className="w-full max-w-sm mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 p-4 space-y-4">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="rounded-full bg-slate-200 h-10 w-10 animate-pulse"></div>
+                                                <div className="flex-1 space-y-2">
+                                                    <div className="h-3 bg-slate-200 rounded w-1/3 animate-pulse"></div>
+                                                    <div className="h-2 bg-slate-200 rounded w-1/4 animate-pulse"></div>
+                                                </div>
+                                            </div>
+                                            <div className="aspect-square bg-slate-200 rounded-xl w-full animate-pulse"></div>
+                                            <div className="space-y-3 pt-2">
+                                                <div className="h-3 bg-slate-200 rounded w-full animate-pulse"></div>
+                                                <div className="h-3 bg-slate-200 rounded w-5/6 animate-pulse"></div>
+                                                <div className="h-3 bg-slate-200 rounded w-4/6 animate-pulse"></div>
                                             </div>
                                         </div>
-                                        <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Criando Conteúdo</h3>
-                                        <p className="text-slate-500 text-sm animate-pulse text-center max-w-xs font-medium leading-relaxed">
-                                            {postLoading ? "A IA está analisando compliance e gerando copy..." : "Processando requisição..."}
+                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-8 animate-pulse text-center">
+                                            Criando Conteúdo...
                                         </p>
                                     </div>
                                 )}
 
-                                {viewMode === 'post' && postResult && <div className="py-4 px-4 flex justify-center min-h-full bg-slate-50"><PostPreview result={postResult} onRegenerateText={handleRegeneratePostText} onRegenerateImage={handleRegeneratePostImage} isRegenerating={regenTextLoading || regenImageLoading} /></div>}
-                                {viewMode === 'post' && !postResult && !isGenerating && (
+                                {(viewMode as string) === 'post' && postResult && <div className="py-4 px-4 flex justify-center min-h-full bg-slate-50"><PostPreview result={postResult} onRegenerateText={handleRegeneratePostText} onRegenerateImage={handleRegeneratePostImage} isRegenerating={regenTextLoading || regenImageLoading} /></div>}
+                                {(viewMode as string) === 'post' && !postResult && !isGenerating && (
                                     <div className="h-full flex flex-col items-center justify-center text-slate-300 p-8">
                                         <Globe className="w-16 h-16 mb-4 opacity-20" />
                                         <p className="text-sm font-medium">Configure o post para visualizar.</p>
                                     </div>
                                 )}
-                                {viewMode === 'seo' && articleResult && <div className="p-4 lg:p-12 max-w-6xl mx-auto h-full"><ArticlePreview article={articleResult} onConvertToPost={handleTransformArticleToPost} /></div>}
-                                {viewMode === 'infographic' && infographicResult && <div className="w-full h-full min-h-screen lg:min-h-0"><InfographicPreview data={infographicResult.data} heroImageUrl={infographicResult.heroImageUrl} anatomyImageUrl={infographicResult.anatomyImageUrl} onBack={() => setInfographicResult(null)} /></div>}
-                                {viewMode === 'conversion' && conversionResult && <div className="p-4 lg:p-12 max-w-4xl mx-auto"><ConversionPreview result={conversionResult} /></div>}
+                                {(viewMode as ViewMode) === 'seo' && articleResult && <div className="p-4 lg:p-12 max-w-6xl mx-auto h-full"><ArticlePreview article={articleResult} onConvertToPost={handleTransformArticleToPost} /></div>}
+                                {(viewMode as ViewMode) === 'infographic' && infographicResult && <div className="w-full h-full min-h-screen lg:min-h-0"><InfographicPreview data={infographicResult.data} heroImageUrl={infographicResult.heroImageUrl} anatomyImageUrl={infographicResult.anatomyImageUrl} onBack={() => setInfographicResult(null)} /></div>}
+                                {(viewMode as ViewMode) === 'conversion' && conversionResult && <div className="p-4 lg:p-12 max-w-4xl mx-auto"><ConversionPreview result={conversionResult} /></div>}
                             </div>
                        </div>
                   </div>
               )}
           </main>
 
-          {/* NAV BAR */}
-          <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-2xl border-t border-slate-200/60 flex justify-between items-start pt-2 px-6 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.04)] min-h-[85px]">
-              <button onClick={() => setViewMode('dashboard')} className={`flex flex-col items-center gap-1 w-16 group transition-all duration-300 active:scale-90 relative top-1 ${viewMode === 'dashboard' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <div className={`p-1.5 rounded-2xl transition-all duration-300 ${viewMode === 'dashboard' ? 'bg-primary/10' : 'bg-transparent'}`}><LayoutDashboard className="w-6 h-6" /></div>
-                  <span className="text-[10px] font-bold">Início</span>
-              </button>
-              <button onClick={() => setViewMode('scores')} className={`flex flex-col items-center gap-1 w-16 group transition-all duration-300 active:scale-90 relative top-1 ${['scores', 'frax', 'calculator', 'prescription', 'journey', 'video', 'clinical'].includes(viewMode) ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <div className={`p-1.5 rounded-2xl transition-all duration-300 ${['scores', 'frax', 'calculator', 'prescription', 'journey', 'video', 'clinical'].includes(viewMode) ? 'bg-primary/10' : 'bg-transparent'}`}><Stethoscope className="w-6 h-6" /></div>
-                  <span className="text-[10px] font-bold">Clínica</span>
-              </button>
-              <div className="relative -top-8">
-                 <button onClick={() => setViewMode('seo')} className="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-glow border-[4px] border-[#F8FAFC] transition-transform duration-300 active:scale-90 group relative z-10">
-                    <BookOpen className="w-7 h-7 group-hover:scale-110" />
-                 </button>
-              </div>
-              <button onClick={() => setViewMode('post')} className={`flex flex-col items-center gap-1 w-16 group transition-all duration-300 active:scale-90 relative top-1 ${viewMode === 'post' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <div className={`p-1.5 rounded-2xl transition-all duration-300 ${viewMode === 'post' ? 'bg-primary/10' : 'bg-transparent'}`}><Briefcase className="w-6 h-6" /></div>
-                  <span className="text-[10px] font-bold">Post</span>
-              </button>
-              <button onClick={() => setViewMode('history')} className={`flex flex-col items-center gap-1 w-16 group transition-all duration-300 active:scale-90 relative top-1 ${viewMode === 'history' ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}>
-                  <div className={`p-1.5 rounded-2xl transition-all duration-300 ${viewMode === 'history' ? 'bg-primary/10' : 'bg-transparent'}`}><HistoryIcon className="w-6 h-6" /></div>
-                  <span className="text-[10px] font-bold">Histórico</span>
-              </button>
-          </nav>
+          {!isZenMode && (
+            <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-2xl border-t border-slate-200/60 z-50 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.04)] min-h-[70px]">
+                <div className="grid grid-cols-6 h-full items-end pb-2 pt-2 px-1">
+                    {navItems.map((item) => {
+                        const isActive = item.id === 'scores' 
+                            ? ['scores', 'frax', 'calculator', 'prescription', 'journey', 'video', 'clinical'].includes(viewMode)
+                            : viewMode === item.id;
+                        
+                        return (
+                            <button 
+                                key={item.id}
+                                onClick={() => setViewMode(item.id as ViewMode)} 
+                                className={`flex flex-col items-center gap-1 group transition-all duration-300 active:scale-95 ${isActive ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                <div className={`p-1.5 rounded-2xl transition-all duration-300 ${isActive ? 'bg-primary/10' : 'bg-transparent'}`}>
+                                    <item.icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </div>
+                                <span className="text-[9px] font-bold truncate w-full text-center">{item.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+            </nav>
+          )}
       </div>
     </div>
   );
 }
 
 export default App;
+    

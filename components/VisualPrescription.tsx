@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
-import { PlayCircle, CheckCircle2, Share2, Plus, X, Video } from 'lucide-react';
+import { PlayCircle, CheckCircle2, Share2, Plus, Video, Check } from 'lucide-react';
 
 // Mock Data reusing the concept from MaterialsLibrary
 const exerciseLibrary = [
     { id: 1, title: 'Isometria de Quadríceps', duration: '2 min', category: 'Fortalecimento', img: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=400&q=80' },
     { id: 2, title: 'Elevação da Perna Reta', duration: '3 séries', category: 'Fortalecimento', img: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=400&q=80' },
     { id: 3, title: 'Mobilização de Patela', duration: '5 min', category: 'Mobilidade', img: 'https://images.unsplash.com/photo-1581056771107-24ca5f033842?auto=format&fit=crop&w=400&q=80' },
-    { id: 4, title: 'Extensão Passiva (Prone)', duration: '10 min', category: 'Amplitude', img: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&w=400&q=80' },
+    { id: 4, title: 'Extensão Passiva', duration: '10 min', category: 'Amplitude', img: 'https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&w=400&q=80' },
     { id: 5, title: 'Bom dia (Good Morning)', duration: '3 séries', category: 'Posterior', img: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=400&q=80' },
     { id: 6, title: 'Cadeira Extensora', duration: '4 séries', category: 'Academia', img: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=400&q=80' },
 ];
@@ -102,31 +102,34 @@ const VisualPrescription: React.FC = () => {
             )}
         </div>
 
-        {/* Video Grid - Single Column on Mobile for better visibility */}
-        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto no-scrollbar">
+        {/* Video Grid - Forced 2 columns */}
+        <div className="p-4 grid grid-cols-2 gap-3 overflow-y-auto no-scrollbar">
             {exerciseLibrary.map(video => {
                 const isSelected = selectedVideos.includes(video.id);
                 return (
                     <div 
                         key={video.id}
                         onClick={() => toggleSelection(video.id)}
-                        className={`bg-white rounded-2xl overflow-hidden border cursor-pointer transition-all duration-300 relative group
+                        className={`relative bg-white rounded-2xl overflow-hidden border cursor-pointer transition-all duration-300 group
                         ${isSelected ? 'border-purple-600 shadow-lg ring-1 ring-purple-600' : 'border-slate-100 shadow-sm hover:border-purple-200'}`}
                     >
-                        <div className="aspect-video bg-slate-200 relative">
+                        {/* Checkbox Indicator */}
+                        <div className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10 transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-black/20 text-white/50'}`}>
+                            {isSelected ? <Check className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
+                        </div>
+
+                        <div className="aspect-[4/3] bg-slate-200 relative">
                             <img src={video.img} className={`w-full h-full object-cover transition-opacity ${isSelected ? 'opacity-90' : ''}`} />
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md transition-all ${isSelected ? 'bg-purple-600 text-white' : 'bg-black/30 text-white'}`}>
-                                    {isSelected ? <CheckCircle2 className="w-6 h-6" /> : <PlayCircle className="w-6 h-6" />}
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-black/30 backdrop-blur-sm text-white">
+                                    <PlayCircle className="w-5 h-5 ml-0.5" />
                                 </div>
                             </div>
                         </div>
-                        <div className="p-4">
-                            <div className="flex justify-between items-start mb-1">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{video.category}</span>
-                                <span className="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded">{video.duration}</span>
-                            </div>
-                            <h3 className={`font-bold text-sm line-clamp-1 transition-colors ${isSelected ? 'text-purple-700' : 'text-slate-900'}`}>{video.title}</h3>
+                        <div className="p-3">
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block mb-1 truncate">{video.category}</span>
+                            <h3 className={`font-bold text-xs leading-tight line-clamp-2 mb-2 ${isSelected ? 'text-purple-700' : 'text-slate-900'}`}>{video.title}</h3>
+                            <span className="text-[9px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 inline-block">{video.duration}</span>
                         </div>
                     </div>
                 );

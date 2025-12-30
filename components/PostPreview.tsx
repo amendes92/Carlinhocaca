@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { GeneratedResult, PostFormat } from '../types';
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Check, Edit2, Wand2, Battery, Wifi, Signal, Instagram, Loader2, Share2, RefreshCw, Video } from 'lucide-react';
-import { refinePostCaption, remixContent } from '../services/geminiService';
+import { refinePostCaption, remixContent } from '../services/geminiService'; // Import remixContent
 import { publishToInstagram, getStoredInstagramConfig } from '../services/instagramService';
 import InstagramConnect from './InstagramConnect';
 import CFMComplianceGuide from './CFMComplianceGuide';
@@ -28,6 +28,8 @@ const PostPreview: React.FC<PostPreviewProps> = ({
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [showConnectModal, setShowConnectModal] = useState(false);
+  
+  // Remix State
   const [isRemixing, setIsRemixing] = useState(false);
 
   useEffect(() => {
@@ -80,7 +82,9 @@ const PostPreview: React.FC<PostPreviewProps> = ({
       setIsRemixing(true);
       try {
           const remixed = await remixContent(editableCaption, target);
+          console.log("Remixed content:", remixed);
           alert("Conteúdo remixado gerado! (Funcionalidade de visualização em breve)");
+          // In a full implementation, this would navigate to VideoWizard or ArticleWizard with the result pre-filled.
       } catch (e) {
           alert("Erro ao remixar.");
       } finally {
@@ -99,12 +103,11 @@ const PostPreview: React.FC<PostPreviewProps> = ({
         )}
 
         {/* LEFT COLUMN: PHONE MOCKUP */}
-        <div className="flex-shrink-0 mx-auto lg:mx-0 w-full max-w-[320px] flex justify-center">
-            {/* Scaled wrapper for small screens */}
-            <div className="relative w-full aspect-[9/19.5] max-h-[85vh] bg-white rounded-[2rem] shadow-[0_0_0_8px_#1e293b,0_15px_40px_-10px_rgba(0,0,0,0.4)] overflow-hidden border-[3px] border-slate-800 transform-gpu">
+        <div className="flex-shrink-0 mx-auto lg:mx-0 w-full lg:w-auto flex justify-center">
+            <div className="bg-white rounded-[2rem] shadow-[0_0_0_8px_#1e293b,0_15px_40px_-10px_rgba(0,0,0,0.4)] overflow-hidden relative aspect-[9/19.5] w-full max-w-[320px] max-h-[calc(100vh-160px)] border-[3px] border-slate-800">
                 
                 <div className="absolute top-0 left-0 right-0 h-7 z-30 flex justify-center items-end pb-1">
-                    <div className="w-20 h-5 bg-black rounded-b-xl"></div>
+                    <div className="w-24 h-6 bg-black rounded-b-xl"></div>
                 </div>
 
                 <div className="h-10 bg-white flex items-center justify-between px-5 pt-2 select-none text-slate-900 z-20 relative">
@@ -189,7 +192,7 @@ const PostPreview: React.FC<PostPreviewProps> = ({
                                     <textarea 
                                         value={editableCaption}
                                         onChange={(e) => setEditableCaption(e.target.value)}
-                                        className="w-full h-48 text-xs leading-relaxed p-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-slate-50 font-sans"
+                                        className="w-full h-48 text-xs leading-relaxed p-2 border border-primary-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-slate-50 font-sans"
                                     />
                                     <button onClick={() => setIsEditing(false)} className="absolute bottom-2 right-2 bg-green-500 text-white p-1.5 rounded-full shadow-lg hover:bg-green-600 transition-all active:scale-90"><Check className="w-3 h-3" /></button>
                                 </div>
@@ -197,7 +200,7 @@ const PostPreview: React.FC<PostPreviewProps> = ({
                                 <div className={`text-xs leading-relaxed text-slate-800 font-sans transition-opacity ${isRegenerating ? 'opacity-50' : 'opacity-100'}`}>
                                     <span className="font-bold mr-1 text-slate-900">dr.carlos_franciozi</span>
                                     <span className="whitespace-pre-wrap">{editableCaption}</span>
-                                    <button onClick={() => setIsEditing(true)} className="ml-1 text-[9px] text-slate-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:text-slate-600"><Edit2 className="w-2.5 h-2.5 inline mr-0.5" /> Editar</button>
+                                    <button onClick={() => setIsEditing(true)} className="ml-1 text-[9px] text-slate-400 font-bold opacity-0 group-hover:opacity-100 transition-opacity hover:text-primary"><Edit2 className="w-2.5 h-2.5 inline mr-0.5" /> Editar</button>
                                 </div>
                             )}
                         </div>
@@ -217,7 +220,7 @@ const PostPreview: React.FC<PostPreviewProps> = ({
                 {!isEditing && (
                     <div className="absolute bottom-4 left-3 right-3 bg-white/95 backdrop-blur-xl border border-slate-200 shadow-[0_4px_15px_rgba(0,0,0,0.1)] rounded-xl p-1.5 z-30 flex gap-2 overflow-x-auto no-scrollbar">
                         {isRefining ? (
-                            <div className="w-full text-center text-[10px] font-bold text-slate-600 py-1.5 flex items-center justify-center gap-2"><Wand2 className="w-3 h-3 animate-spin" /> Refinando...</div>
+                            <div className="w-full text-center text-[10px] font-bold text-primary py-1.5 flex items-center justify-center gap-2"><Wand2 className="w-3 h-3 animate-spin" /> Refinando...</div>
                         ) : (
                             <>
                                 <button onClick={() => handleSmartRefine("Mais curto")} className="flex-shrink-0 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 rounded-lg text-[9px] font-bold text-slate-700 whitespace-nowrap transition-colors border border-slate-100">✂️ Encurtar</button>
